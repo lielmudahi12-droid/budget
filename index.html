@@ -120,7 +120,8 @@
     <button class="quick" onclick="setQuick('אכלתי שוורמה ב-38')">אכלתי שוורמה ב-38</button>
     <button class="quick" onclick="setQuick('נסעתי ברכבת ב-22')">נסעתי ברכבת ב-22</button>
     <button class="quick" onclick="setQuick('קניתי חולצת ביתר ב-180')">קניתי חולצת ביתר ב-180</button>
-    <button class="quick" onclick="setQuick('קיבלתי 300 שקל מזומן')">קיבלתי 300 ₪</button>
+    <button class="quick" onclick="setQuick('קיבלתי 400 שקל מזומן')">קיבלתי מזומן 💵</button>
+    <button class="quick" onclick="setQuick('קיבלתי 150 שקל בביט')">קיבלתי ביט 🔵</button>
     <button class="quick" onclick="setQuick('כמה הוצאתי החודש?')">כמה הוצאתי?</button>
   </div>
   <div id="inputrow">
@@ -167,10 +168,13 @@
 
   <!-- API Key setup -->
   <div id="apisetup">
-    <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:8px;">🔑 הגדרת מפתח API (חובה לבוט AI)</div>
-    <p>כדי שהבוט יבין עברית ויוסיף עסקאות, הזן מפתח Anthropic API:<br>
-    קבל מפתח חינמי בכתובת: <span style="color:#4ECDC4">console.anthropic.com</span></p>
-    <input id="apikey-input" type="password" placeholder="sk-ant-..." value="">
+    <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:8px;">🔑 הגדרת מפתח Gemini API (חינמי!)</div>
+    <p>הבוט משתמש ב-Google Gemini — <b style="color:#55EFC4">חינמי לגמרי</b> עם חשבון Google.<br><br>
+    <b>איך מקבלים מפתח (2 דקות):</b><br>
+    1. כנס ל־ <span style="color:#4ECDC4">aistudio.google.com</span><br>
+    2. לחץ <b>"Get API Key"</b> → <b>"Create API Key"</b><br>
+    3. העתק והדבק כאן 👇</p>
+    <input id="apikey-input" type="password" placeholder="AIza..." value="">
     <button id="apikey-save" onclick="saveApiKey()">שמור מפתח ← הפעל בוט</button>
     <div id="apikey-status" style="font-size:11px;color:#666;margin-top:6px;text-align:center;"></div>
   </div>
@@ -240,7 +244,7 @@ let loading = false;
 // ── INIT ──
 document.addEventListener("DOMContentLoaded", () => {
   if(apiKey) document.getElementById("apikey-input").value = apiKey;
-  addBotMsg("היי! 👋 אני הבוט של הדשבורד שלך.\n\nכתוב לי בעברית רגילה:\n• \"אכלתי שוורמה ב-38\"\n• \"קניתי חולצת ביתר ב-180 במזומן\"\n• \"קיבלתי 400 שקל דמי כיס\"\n• \"כמה הוצאתי החודש?\"" + (apiKey ? "\n\n✅ הבוט מוכן ופעיל!" : "\n\n⚠️ הזן מפתח API בלשונית 📲 כדי להפעיל את הבוט"));
+  addBotMsg("היי! 👋 אני הבוט של הדשבורד שלך.\n\nכתוב לי בעברית רגילה:\n• \"אכלתי שוורמה ב-38\"\n• \"קניתי חולצת ביתר ב-180 במזומן\"\n• \"קיבלתי 400 שקל דמי כיס\"\n• \"כמה הוצאתי החודש?\"" + (apiKey ? "\n\n✅ Gemini מוכן ופעיל!" : "\n\n⚙️ כנס ללשונית 📲 כדי להגדיר מפתח Gemini חינמי"));
   document.getElementById("msginput").addEventListener("input", () => {
     document.getElementById("sendbtn").disabled = !document.getElementById("msginput").value.trim();
   });
@@ -325,7 +329,7 @@ async function send() {
   input.value = "";
   document.getElementById("sendbtn").disabled = true;
   addUserMsg(text);
-  if(!apiKey) { addBotMsg("⚠️ אין מפתח API. עבור ללשונית 📲 והזן מפתח Anthropic."); return; }
+  if(!apiKey) { addBotMsg("⚠️ אין מפתח Gemini. עבור ללשונית 📲 והגדר מפתח חינמי מ-aistudio.google.com"); return; }
 
   loading = true;
   const typingEl = showTyping();
@@ -335,34 +339,71 @@ async function send() {
   const bankIncome  = income.filter(i=>i.type==="bank").reduce((s,i)=>s+i.amount,0);
   const cashSpent   = currentTxns.filter(t=>t.type==="cash"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
   const bankSpent   = currentTxns.filter(t=>t.type==="credit"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
+  const bitIncome   = income.filter(i=>i.type==="bit").reduce((s,i)=>s+i.amount,0);
+  const bitSpent    = currentTxns.filter(t=>t.type==="bit"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
   const cashBal     = wallet.cash+cashIncome-cashSpent;
   const bankBal     = wallet.bank+bankIncome-bankSpent;
+  const bitBal      = (wallet.bit||0)+bitIncome-bitSpent;
   const totalSpent  = currentTxns.filter(t=>t.category!=="savings").reduce((s,t)=>s+t.amount,0);
 
-  const systemPrompt = `אתה בוט ניהול תקציב אישי לתלמיד תיכון ישראלי. ענה תמיד בעברית ידידותית וקצרה.
-נתונים: חודש=${nowMonth()}, מזומן=${cashBal}₪, בנק=${bankBal}₪, הוצאות החודש=${totalSpent}₪
-עסקאות אחרונות: ${JSON.stringify(currentTxns.slice(-5))}
+  const systemPrompt = `אתה בוט ניהול תקציב. ענה בעברית קצרה וידידותית.
+חודש=${nowMonth()}, מזומן=${cashBal}₪, בנק=${bankBal}₪, ביט=${bitBal}₪, הוצאות=${totalSpent}₪
+עסקאות=${JSON.stringify(currentTxns.slice(-5))}
+עסקה ממתינה=${window._pendingTxn?JSON.stringify(window._pendingTxn):"אין"}
 
-כשמדווחים על הוצאה/הכנסה, החזר JSON בלבד (ללא טקסט נוסף):
-{"reply":"תגובה קצרה","action":"add_expense"|"add_income"|"query"|"none","transaction":{"desc":"...","amount":50,"category":"food|transport|hobbies|social|beitar|savings|other","type":"cash|credit","date":"YYYY-MM-DD"}|null}`;
+חוקים:
+1. אם יש עסקה ממתינה (לא אין) והמשתמש ענה אופן תשלום -> השלם עם type ו-action נכון (add_expense/add_income לפי is_income).
+2. אם המשתמש מדווח הוצאה/הכנסה בלי לציין אופן תשלום -> action=ask_type, שאל "במזומן, אשראי או ביט?", שמור פרטים ב-transaction עם type=null.
+3. הכנסה (דמי כיס/עבודה/מתנה/ביט שנכנס) -> is_income:true, action=add_income.
+4. הוצאה (קנייה/בזבוז) -> is_income:false, action=add_expense.
+5. type: cash=מזומן, credit=אשראי/כרטיס, bit=ביט.
+
+החזר JSON בלבד ללא טקסט נוסף:
+{"reply":"תגובה","action":"add_expense|add_income|ask_type|query|none","transaction":{"desc":"...","amount":50,"category":"food|transport|hobbies|social|beitar|savings|other","type":"cash|credit|bit|null","date":"YYYY-MM-DD","is_income":false}}`;
 
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
       method:"POST",
-      headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:500,system:systemPrompt,messages:[{role:"user",content:text}]})
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        contents:[{parts:[{text: systemPrompt + "\n\nהמשתמש כתב: " + text}]}],
+        generationConfig:{maxOutputTokens:500,temperature:0.3}
+      })
     });
     const data = await res.json();
     typingEl.remove();
 
-    if(data.error) { addBotMsg("שגיאת API: " + (data.error.message||"נסה שוב")); loading=false; return; }
+    if(data.error) { addBotMsg("שגיאת API: " + (data.error.message||"נסה שוב") + "\n\nוודא שהמפתח תקין בלשונית 📲"); loading=false; return; }
 
-    const raw = data.content?.[0]?.text||"{}";
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
     let parsed;
     try{ parsed=JSON.parse(raw.replace(/```json|```/g,"").trim()); }
     catch{ parsed={reply:raw,action:"none",transaction:null}; }
 
     let chip = null;
+
+    // ask_type: שאל על אופן תשלום
+    if(parsed.action==="ask_type"&&parsed.transaction){
+      window._pendingTxn=parsed.transaction;
+      addBotMsg(parsed.reply||"באיזו צורה? 💵 מזומן · 💳 אשראי · 🔵 ביט");
+      loading=false; return;
+    }
+
+    // המשתמש ענה על אופן תשלום עבור עסקה ממתינה
+    if(window._pendingTxn&&(!parsed.transaction?.type||parsed.action==="none")){
+      const l=text.toLowerCase();
+      let rt=null;
+      if(/מזומן|cash/.test(l)) rt="cash";
+      else if(/אשראי|כרטיס|credit/.test(l)) rt="credit";
+      else if(/ביט|bit/.test(l)) rt="bit";
+      if(rt){
+        parsed.transaction={...window._pendingTxn,type:rt};
+        parsed.action=window._pendingTxn.is_income?"add_income":"add_expense";
+        parsed.reply=parsed.reply||"מעולה! רשמתי ✓";
+        window._pendingTxn=null;
+      }
+    }
+
     if(parsed.action==="add_expense"&&parsed.transaction?.amount){
       const t=parsed.transaction;
       const month=monthKey(t.date||todayStr());
@@ -371,13 +412,16 @@ async function send() {
       txns[month].push(newTxn);
       lsSet(LS.txns, txns);
       chip={...newTxn,income:false};
+      window._pendingTxn=null;
     }
     if(parsed.action==="add_income"&&parsed.transaction?.amount){
       const t=parsed.transaction;
-      const newInc={id:Date.now(),date:t.date||todayStr(),desc:t.desc||text,amount:t.amount,type:t.type==="cash"?"cash":"bank"};
+      const tm={cash:"cash",credit:"bank",bit:"bit"};
+      const newInc={id:Date.now(),date:t.date||todayStr(),desc:t.desc||text,amount:t.amount,type:tm[t.type]||"cash"};
       income.push(newInc);
       lsSet(LS.income, income);
       chip={...newInc,category:"savings",income:true};
+      window._pendingTxn=null;
     }
     addBotMsg(parsed.reply||"הבנתי! ✓", chip);
   } catch(e) {
@@ -390,11 +434,11 @@ async function send() {
 // ── API KEY ──
 function saveApiKey() {
   const val = document.getElementById("apikey-input").value.trim();
-  if(!val.startsWith("sk-ant-")) { document.getElementById("apikey-status").textContent="❌ מפתח לא תקין (צריך להתחיל ב-sk-ant-)"; return; }
+  if(!val.startsWith("AIza")) { document.getElementById("apikey-status").textContent="❌ מפתח לא תקין (צריך להתחיל ב-AIza)"; return; }
   apiKey = val;
   localStorage.setItem(LS.apikey, val);
   document.getElementById("apikey-status").textContent="✅ נשמר! הבוט פעיל.";
-  addBotMsg("✅ מפתח API נשמר! עכשיו אני יכול לעבוד. נסה לכתוב לי משהו 💬");
+  addBotMsg("✅ מפתח Gemini נשמר! עכשיו אני יכול לעבוד. נסה לכתוב לי משהו 💬");
   switchView("chat");
 }
 
@@ -405,8 +449,11 @@ function renderSummary() {
   const bankIncome  = income.filter(i=>i.type==="bank").reduce((s,i)=>s+i.amount,0);
   const cashSpent   = currentTxns.filter(t=>t.type==="cash"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
   const bankSpent   = currentTxns.filter(t=>t.type==="credit"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
+  const bitIncome   = income.filter(i=>i.type==="bit").reduce((s,i)=>s+i.amount,0);
+  const bitSpent    = currentTxns.filter(t=>t.type==="bit"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
   const cashBal     = wallet.cash+cashIncome-cashSpent;
   const bankBal     = wallet.bank+bankIncome-bankSpent;
+  const bitBal      = (wallet.bit||0)+bitIncome-bitSpent;
   const totalSpent  = currentTxns.filter(t=>t.category!=="savings").reduce((s,t)=>s+t.amount,0);
   const byCat={};
   for(const t of currentTxns) byCat[t.category]=(byCat[t.category]||0)+t.amount;
