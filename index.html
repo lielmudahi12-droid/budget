@@ -193,7 +193,7 @@ let apiKey=lsGet(LS.apikey,null)||localStorage.getItem(LS.apikey);
 let loading=false;
 window._pendingTxn=null;
 let chatHistory=lsGet(LS.chatHistory,[]);
-function saveChatHistory(){try{const msgs=[];document.querySelectorAll('.bubble-wrap').forEach((w,i)=>{const isUser=w.classList.contains('user');const text=w.querySelector('.bubble')?.childNodes[0]?.textContent||'';const chip=w.querySelector('.txn-chip')?.innerHTML||null;msgs.push({i,user:isUser,text,chip,id:Date.now()+i});});const hist=msgs.slice(-60);localStorage.setItem(LS.chatHistory,JSON.stringify(hist));syncPush(LS.chatHistory,hist);}catch{}catch{}}
+function saveChatHistory(){try{const msgs=[];document.querySelectorAll('.bubble-wrap').forEach((w,i)=>{const isUser=w.classList.contains('user');const text=w.querySelector('.bubble')?.childNodes[0]?.textContent||'';const chip=w.querySelector('.txn-chip')?.innerHTML||null;msgs.push({i,user:isUser,text,chip,id:Date.now()+i});});const hist=msgs.slice(-60);localStorage.setItem(LS.chatHistory,JSON.stringify(hist));syncPush(LS.chatHistory,hist);}catch(e){}}
 function restoreChatHistory(){const saved=lsGet(LS.chatHistory,[]);saved.forEach(m=>{if(m.user)addUserMsg(m.text);else{const w=document.createElement('div');w.className='bubble-wrap bot';const b=document.createElement('div');b.className='bubble bot';b.textContent=m.text;if(m.chip){const ch=document.createElement('div');ch.className='txn-chip';ch.innerHTML=m.chip;b.appendChild(ch);}const t=document.createElement('div');t.className='btime';t.textContent='';w.appendChild(b);w.appendChild(t);document.getElementById('messages').appendChild(w);}});scrollBottom();}
 
 const COLORS={food:"#FF6B6B",transport:"#4ECDC4",hobbies:"#A29BFE",social:"#FD79A8",beitar:"#FFD700",savings:"#55EFC4",other:"#636e72"};
