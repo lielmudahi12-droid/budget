@@ -22,8 +22,8 @@
   .sync-status{font-size:10px;color:#55EFC4;display:flex;align-items:center;gap:5px;margin-right:auto;}
   .sync-dot{width:6px;height:6px;border-radius:50%;background:#55EFC4;}
   .content{max-width:960px;margin:0 auto;padding:16px 20px 40px;min-height:0;}
-  .card{background:#13131F;border-radius:16px;padding:16px;margin-bottom:12px;border:1px solid #ffffff07;}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+  .card{background:#13131F;border-radius:16px;padding:16px;margin-bottom:12px;border:1px solid #ffffff07;overflow:hidden;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;align-items:start;}
   .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;}
   .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:12px;}
   .stat-card{background:#13131F;border-radius:12px;padding:13px;text-align:center;border:1px solid #ffffff07;}
@@ -68,6 +68,7 @@
         <button class="nav-btn" onclick="setView('income')" id="nav-income">💵 הכנסות</button>
         <button class="nav-btn" onclick="setView('transactions')" id="nav-transactions">📋 עסקאות</button>
         <button class="nav-btn" onclick="setView('add')" id="nav-add">➕ הוסף</button>
+        <button class="nav-btn" onclick="setView('debts')" id="nav-debts">💳 חובות</button>
         <button class="nav-btn" onclick="syncAll()">🔄 סנכרן</button>
         <a href="index.html" class="nav-btn" style="text-decoration:none;background:#FFD70015;border-color:#FFD700;color:#FFD700;">💬 חזור לצ'אט</a>
       </div>
@@ -218,15 +219,7 @@ function renderAll(){
     <div class="wallet-card">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div style="font-size:12px;color:#55EFC4;font-weight:700;">💳 יתרות נוכחיות</div>
-        <button class="btn-edit" onclick="toggleEditWallet()">✏️ עדכן</button>
-      </div>
-      <div id="wallet-edit" style="display:none;margin-top:10px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;">
-          <div><div style="font-size:11px;color:#888;margin-bottom:3px;">💵 מזומן</div><input class="inp" id="w-cash" type="number" value="${wallet.cash}" style="padding:7px 10px;"></div>
-          <div><div style="font-size:11px;color:#888;margin-bottom:3px;">🏦 בנק</div><input class="inp" id="w-bank" type="number" value="${wallet.bank}" style="padding:7px 10px;"></div>
-          <div><div style="font-size:11px;color:#888;margin-bottom:3px;">🔵 ביט</div><input class="inp" id="w-bit" type="number" value="${wallet.bit||0}" style="padding:7px 10px;"></div>
-          <button class="btn btn-green" onclick="saveWallet()" style="padding:8px 16px;white-space:nowrap;">שמור</button>
-        </div>
+        <button class="btn-edit" onclick="openWalletModal()">✏️ עדכן</button>
       </div>
       <div class="w-grid">
         ${[{l:"💵 מזומן",v:cash,s:`−${cashSpent}₪`,c:"#55EFC4"},{l:"🏦 בנק",v:bank,s:`−${bankSpent}₪`,c:"#4ECDC4"},{l:"🔵 ביט",v:bit,s:`−${bitSpent}₪`,c:"#6C9BFF"},{l:"💰 סה״כ",v:total,s:total>=0?"✅":"⚠️",c:total>=0?"#FFD700":"#FF6B6B"}].map(b=>`
@@ -260,8 +253,8 @@ function renderAll(){
 
     // Charts row
     viewHtml+=`<div class="grid2">
-      <div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">התפלגות — ${activeMonth}</div><canvas id="pie-chart" height="160"></canvas><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${Object.entries(cats).map(([k,v])=>`<span style="font-size:10px;color:#666;display:flex;align-items:center;gap:3px;"><span style="width:6px;height:6px;border-radius:50%;background:${COLORS[k]};display:inline-block;"></span>${CAT_LABELS[k]?.split(" ")[1]||k} ${v}₪</span>`).join("")}</div></div>
-      <div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">חודשים + שנה 📅</div><canvas id="bar-chart" height="160"></canvas></div>
+      <div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">התפלגות — ${activeMonth}</div><div style="height:160px;position:relative;"><canvas id="pie-chart"></canvas></div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${Object.entries(cats).map(([k,v])=>`<span style="font-size:10px;color:#666;display:flex;align-items:center;gap:3px;"><span style="width:6px;height:6px;border-radius:50%;background:${COLORS[k]};display:inline-block;"></span>${CAT_LABELS[k]?.split(" ")[1]||k} ${v}₪</span>`).join("")}</div></div>
+      <div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">חודשים + שנה 📅</div><div style="height:160px;position:relative;"><canvas id="bar-chart"></canvas></div></div>
     </div>`;
 
     // Yearly summary
@@ -371,6 +364,53 @@ function renderAll(){
     </div>`;
   }
 
+  if(currentView==="debts"){
+    const unpaid=debts.filter(d=>!d.paid);
+    const paid=debts.filter(d=>d.paid);
+    const totalUnpaid=unpaid.reduce((s,d)=>s+d.amount,0);
+    viewHtml+=`<div class="card" style="border-color:#6C9BFF25;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:700;color:#6C9BFF;">💳 חייבים לי — ${totalUnpaid}₪</div>
+      </div>
+      <div style="display:grid;gap:9px;background:#0A0A14;border-radius:10px;padding:12px;margin-bottom:14px;">
+        <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:2px;">➕ הוסף חוב חדש</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <input class="inp" id="debt-person" placeholder="שם האדם" style="padding:8px 10px;">
+          <input class="inp" id="debt-amount" type="number" placeholder="סכום ₪" style="padding:8px 10px;">
+        </div>
+        <input class="inp" id="debt-desc" placeholder="הערה (אופציונלי)" style="padding:8px 10px;">
+        <button class="btn btn-gold" onclick="addDebt()">הוסף חוב</button>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#888;margin-bottom:8px;">פתוחים (${unpaid.length})</div>
+      ${unpaid.length===0?'<div style="font-size:12px;color:#444;text-align:center;padding:10px;">אין חובות פתוחים 🎉</div>':
+        unpaid.map(d=>`
+          <div class="txn-row">
+            <div>
+              <div style="font-size:13px;color:#ddd;">${d.person}</div>
+              <div style="font-size:10px;color:#444;">${d.desc||""} · ${d.date}</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <div style="font-weight:700;color:#6C9BFF;font-size:15px;">+${d.amount}₪</div>
+              <button onclick="markPaid('${d.id}')" style="padding:4px 10px;border-radius:7px;font-size:11px;border:none;background:#55EFC4;color:#000;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;">שולם ✓</button>
+              <button class="btn-red" onclick="deleteDebt('${d.id}')">🗑️</button>
+            </div>
+          </div>`).join("")}
+      ${paid.length>0?`
+        <div style="font-size:11px;font-weight:700;color:#444;margin-top:14px;margin-bottom:8px;">שולם (${paid.length})</div>
+        ${paid.map(d=>`
+          <div class="txn-row" style="opacity:0.4;">
+            <div>
+              <div style="font-size:13px;text-decoration:line-through;">${d.person}</div>
+              <div style="font-size:10px;color:#444;">${d.desc||""} · ${d.date}</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <div style="font-weight:700;color:#55EFC4;font-size:14px;">✓ ${d.amount}₪</div>
+              <button class="btn-red" onclick="deleteDebt('${d.id}')">🗑️</button>
+            </div>
+          </div>`).join("")}`:""}
+    </div>`;
+  }
+
   if(currentView==="add"){
     viewHtml+=`
     <div class="card">
@@ -469,13 +509,24 @@ function setIncType(t){
   });
 }
 
-function toggleEditWallet(){
-  const el=document.getElementById("wallet-edit");
-  el.style.display=el.style.display==="none"?"block":"none";
+function openWalletModal(){
+  document.getElementById("w-cash").value=wallet.cash||0;
+  document.getElementById("w-bank").value=wallet.bank||0;
+  document.getElementById("w-bit").value=wallet.bit||0;
+  document.getElementById("wallet-modal").style.display="flex";
+}
+function closeWalletModal(){
+  document.getElementById("wallet-modal").style.display="none";
 }
 function saveWallet(){
-  wallet={cash:parseFloat(document.getElementById("w-cash").value)||0,bank:parseFloat(document.getElementById("w-bank").value)||0,bit:parseFloat(document.getElementById("w-bit").value)||0};
-  lsSet(LS.wallet,wallet);document.getElementById("wallet-edit").style.display="none";renderAll();
+  wallet={
+    cash:parseFloat(document.getElementById("w-cash").value)||0,
+    bank:parseFloat(document.getElementById("w-bank").value)||0,
+    bit:parseFloat(document.getElementById("w-bit").value)||0
+  };
+  lsSet(LS.wallet,wallet);
+  closeWalletModal();
+  renderAll();
 }
 
 function addExpense(){
@@ -589,5 +640,29 @@ loadAll();
 syncAll();
 setInterval(syncAll,30000);
 </script>
+<!-- WALLET MODAL -->
+<div id="wallet-modal" style="display:none;position:fixed;inset:0;background:#000000aa;z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:#13131F;border:1px solid #55EFC430;border-radius:16px;padding:20px;width:90%;max-width:480px;margin:0 auto;">
+    <div style="font-size:14px;font-weight:700;color:#55EFC4;margin-bottom:14px;">✏️ עדכון יתרות התחלתיות</div>
+    <div style="display:grid;gap:12px;margin-bottom:14px;">
+      <div>
+        <div style="font-size:11px;color:#888;margin-bottom:5px;">💵 מזומן</div>
+        <input class="inp" id="w-cash" type="number" placeholder="0">
+      </div>
+      <div>
+        <div style="font-size:11px;color:#888;margin-bottom:5px;">🏦 בנק</div>
+        <input class="inp" id="w-bank" type="number" placeholder="0">
+      </div>
+      <div>
+        <div style="font-size:11px;color:#888;margin-bottom:5px;">🔵 ביט</div>
+        <input class="inp" id="w-bit" type="number" placeholder="0">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-green" onclick="saveWallet()" style="flex:1;">שמור ✓</button>
+      <button class="btn" onclick="closeWalletModal()" style="background:#1a1a2e;color:#888;border:1px solid #ffffff12;">ביטול</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
