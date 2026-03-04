@@ -93,12 +93,12 @@
       <div id="syncstatus"><div id="syncdot"></div><span id="synctext">מוכן</span></div>
     </div>
     <div id="tabs">
-      <a href="dashboard.html" class="tab" style="text-decoration:none;">🖥️</a>
-      <button class="tab active" onclick="switchView('chat')">💬</button>
-      <button class="tab" onclick="switchView('summary')">📊</button>
-      <button class="tab" onclick="switchView('install')">📲</button>
+      <button class="tab active" data-view="chat" onclick="switchView('chat')">💬</button>
+      <button class="tab" data-view="summary" onclick="switchView('summary')">📊</button>
+      <button class="tab" data-view="install" onclick="switchView('install')">📲</button>
       <button class="tab" onclick="clearHistory()" title="נקה היסטוריה">🗑️</button>
       <button class="tab" onclick="syncAll()" title="סנכרן">🔄</button>
+      <a href="dashboard.html" class="tab" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">🖥️</a>
     </div>
   </div>
 </div>
@@ -113,6 +113,7 @@
     <button class="quick" onclick="setQuick('קיבלתי 150 שקל בביט')">🔵 קיבלתי ביט</button>
     <button class="quick" onclick="setQuick('העברתי 100 שקל ממזומן לביט')">🔄 העברה</button>
     <button class="quick" onclick="setQuick('כמה הוצאתי החודש?')">📊 כמה הוצאתי?</button>
+    <button class="quick" onclick="setQuick('דני חייב לי 50 שקל')">💳 חייב לי</button>
   </div>
   <div id="inputrow">
     <input id="msginput" type="text" placeholder="כתוב כאן בעברית חופשית..." onkeydown="handleKey(event)">
@@ -151,7 +152,7 @@
 </div>
 
 <script>
-const LS={wallet:"bgt_wallet",txns:"bgt_txns",income:"bgt_income",apikey:"bgt_apikey",transfers:"bgt_transfers",chatHistory:"bgt_chat_history"};
+const LS={wallet:"bgt_wallet",txns:"bgt_txns",income:"bgt_income",apikey:"bgt_apikey",transfers:"bgt_transfers",chatHistory:"bgt_chat_history",debts:"bgt_debts"};
 const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}};
 const SYNC_URL="https://script.google.com/macros/s/AKfycbxsVKlcH7iGj4gXmpc6o-bAt_zLZ-WOO_AGx-im0CBCcU_nkZ-HEAcMyvzt8YC793ck/exec";
 async function syncPush(key,value){try{await fetch(SYNC_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,value:JSON.stringify(value)})})}catch{}}
@@ -186,6 +187,7 @@ const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));syncPush(k,v);
 const DEFAULT_WALLET={cash:1300,bank:1620,bit:0};
 
 let wallet=lsGet(LS.wallet,DEFAULT_WALLET);
+let debts=lsGet(LS.debts||'bgt_debts',[]);
 let txns=lsGet(LS.txns,{});
 let income=lsGet(LS.income,[]);
 let transfers=lsGet(LS.transfers,[]);
@@ -301,8 +303,9 @@ async function send(){
   const{cash:cashBal,bank:bankBal,bit:bitBal,totalSpent,currentTxns}=getBalances();
   const pending=window._pendingTxn?JSON.stringify(window._pendingTxn):"אין";
 
+  const totalDebt=debts.filter(d=>!d.paid).reduce((s,d)=>s+d.amount,0);
   const sys=`אתה בוט ניהול תקציב. ענה בעברית קצרה וידידותית.
-יתרות: מזומן=${cashBal}₪, בנק=${bankBal}₪, ביט=${bitBal}₪
+יתרות: מזומן=${cashBal}₪, בנק=${bankBal}₪, ביט=${bitBal}₪, חובות שחייבים לי: ${totalDebt}₪
 הוצאות ${nowMonth()}: ${totalSpent}₪
 עסקאות אחרונות: ${JSON.stringify(currentTxns.slice(-5))}
 עסקה ממתינה: ${pending}
@@ -314,9 +317,11 @@ async function send(){
 4. הוצאה (קנייה) → add_expense, is_income:false.
 5. העברה בין ארנקים → action=transfer.
 6. type: cash=מזומן, credit=אשראי/כרטיס, bit=ביט.
+7. מישהו חייב לי כסף → action=add_debt, debt:{person,amount,desc}.
+8. החזיר לי כסף (שילם חוב) → action=pay_debt, debt:{person}.
 
 החזר JSON בלבד:
-{"reply":"תגובה","action":"add_expense|add_income|ask_type|transfer|query|none","transaction":{"desc":"","amount":0,"category":"food|transport|hobbies|social|beitar|savings|other","type":"cash|credit|bit","date":"YYYY-MM-DD","is_income":false},"transfer":{"from":"cash|bank|bit","to":"cash|bank|bit","amount":0}}`;
+{"reply":"תגובה","action":"add_expense|add_income|ask_type|transfer|add_debt|pay_debt|query|none","transaction":{"desc":"","amount":0,"category":"food|transport|hobbies|social|beitar|savings|other","type":"cash|credit|bit","date":"YYYY-MM-DD","is_income":false},"transfer":{"from":"cash|bank|bit","to":"cash|bank|bit","amount":0},"debt":{"person":"שם","amount":0,"desc":""}}`;
 
   try{
     const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,{
@@ -352,6 +357,17 @@ async function send(){
       window._pendingTxn=null;
     }
 
+    if(p.action==="add_debt"&&p.debt?.amount){
+      const d={id:Date.now(),date:todayStr(),person:p.debt.person||"לא ידוע",amount:p.debt.amount,desc:p.debt.desc||"",paid:false};
+      debts.push(d);lsSet(LS.debts,debts);
+      chip={amount:d.amount,desc:d.person+" חייב לי",type:"cash",income:false};
+      window._pendingTxn=null;
+    }
+    if(p.action==="pay_debt"&&p.debt?.person){
+      debts=debts.map(d=>d.person===p.debt.person?{...d,paid:true}:d);
+      lsSet(LS.debts,debts);
+      window._pendingTxn=null;
+    }
     if(p.action==="add_expense"&&p.transaction?.amount){
       const t=p.transaction;const month=monthKey(t.date||todayStr());
       const newT={id:Date.now(),date:t.date||todayStr(),desc:t.desc||text,amount:t.amount,category:t.category||categorize(t.desc||text),type:t.type||"cash"};
@@ -430,6 +446,15 @@ function renderSummary(){
             <div class="cat-bar-bg"><div class="cat-bar" style="width:${Math.min(100,(val/maxCat)*100)}%;background:${COLORS[cat]}"></div></div>
           </div>`).join("")}
     </div>
+    ${debts.filter(d=>!d.paid).length>0?`
+    <div class="scard" style="border:1px solid #6C9BFF25;">
+      <div class="scard-title" style="color:#6C9BFF;">💳 חייבים לי</div>
+      ${debts.filter(d=>!d.paid).map(d=>`
+        <div class="txn-row">
+          <div><div style="font-size:11px;color:#ddd">${d.person}</div><div style="font-size:9px;color:#444">${d.desc||""} · ${d.date}</div></div>
+          <div style="font-size:12px;font-weight:700;color:#6C9BFF">+${d.amount}₪</div>
+        </div>`).join("")}
+    </div>`:""}
     <div class="scard">
       <div class="scard-title">🕐 עסקאות אחרונות</div>
       ${recent.length===0?'<div style="font-size:11px;color:#444;text-align:center;padding:8px">אין עסקאות עדיין</div>':
@@ -446,11 +471,11 @@ function renderSummary(){
 
 function switchView(v){
   document.querySelectorAll(".view").forEach(el=>{el.classList.remove("active");el.style.display="none";});
-  document.querySelectorAll(".tab").forEach(el=>el.classList.remove("active"));
+  document.querySelectorAll(".tab[data-view]").forEach(el=>el.classList.remove("active"));
   const map={chat:"chat-view",summary:"summary-view",install:"install-view"};
   document.getElementById(map[v]).classList.add("active");
   document.getElementById(map[v]).style.display="flex";
-  document.querySelectorAll(".tab")[{chat:0,summary:1,install:2}[v]].classList.add("active");
+  document.querySelector(`.tab[data-view="${v}"]`)?.classList.add("active");
   if(v==="summary")renderSummary();
 }
 
@@ -460,7 +485,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   syncAll();
   setInterval(syncAll, 30000);
   const{cash,bank,bit}=getBalances();
-  addBotMsg(`היי! 👋 אני הבוט של התקציב שלך.\n\n💵 מזומן: ${cash}₪  🏦 בנק: ${bank}₪  🔵 ביט: ${bit}₪\n\nמה אני יכול לעשות:\n• לרשום הוצאה / הכנסה\n• לרשום העברה בין ארנקים\n• לענות על שאלות תקציב`+(apiKey?"\n\n✅ Gemini מוכן!":"\n\n⚙️ כנס ל-📲 להגדיר מפתח Gemini"));
+  addBotMsg(`היי! 👋 אני הבוט של התקציב שלך.\n\n💵 מזומן: ${cash}₪  🏦 בנק: ${bank}₪  🔵 ביט: ${bit}₪\n\nמה אני יכול לעשות:\n• לרשום הוצאה / הכנסה\n• לרשום העברה בין ארנקים\n• לנהל חובות (מי חייב לי)\n• לענות על שאלות תקציב`+(apiKey?"\n\n✅ Gemini מוכן!":"\n\n⚙️ כנס ל-📲 להגדיר מפתח Gemini"));
   document.getElementById("msginput").addEventListener("input",()=>{
     document.getElementById("sendbtn").disabled=!document.getElementById("msginput").value.trim();
   });
