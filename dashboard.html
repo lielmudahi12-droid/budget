@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>דשבורד תקציב ⚽💛🖤</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Heebo',sans-serif;direction:rtl;background:#0A0A14;color:#E8E8F0;min-height:100vh;}
+  .topbar{background:linear-gradient(160deg,#0D0D1F,#111230,#0E1E3A);border-bottom:1px solid #ffffff0c;padding:16px 20px 12px;}
+  .topbar-inner{max-width:960px;margin:0 auto;}
+  .topbar-title{font-size:10px;letter-spacing:4px;color:#FFD700;font-weight:700;margin-bottom:3px;}
+  .topbar-h1{font-size:22px;font-weight:900;color:#fff;margin:0;}
+  .topbar-row2{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center;}
+  .nav-btn{padding:5px 12px;border-radius:14px;border:1px solid #ffffff18;background:transparent;color:#555;cursor:pointer;font-size:11px;font-family:'Heebo',sans-serif;transition:.15s;}
+  .nav-btn.active{border-color:#FFD700;background:#FFD70015;color:#FFD700;}
+  .month-btn{padding:4px 11px;border-radius:12px;border:1px solid #ffffff12;background:transparent;color:#555;cursor:pointer;font-size:11px;font-family:'Heebo',sans-serif;transition:.15s;}
+  .month-btn.active{border-color:#4ECDC4;background:#4ECDC412;color:#4ECDC4;}
+  .sync-status{font-size:10px;color:#55EFC4;display:flex;align-items:center;gap:5px;margin-right:auto;}
+  .sync-dot{width:6px;height:6px;border-radius:50%;background:#55EFC4;}
+  .content{max-width:960px;margin:0 auto;padding:16px 20px 40px;}
+  .card{background:#13131F;border-radius:16px;padding:16px;margin-bottom:12px;border:1px solid #ffffff07;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:12px;}
+  .stat-card{background:#13131F;border-radius:12px;padding:13px;text-align:center;border:1px solid #ffffff07;}
+  .stat-label{font-size:10px;color:#555;margin-bottom:3px;}
+  .stat-val{font-size:20px;font-weight:900;}
+  .wallet-card{background:linear-gradient(135deg,#0E1E10,#0A1A0A);border:1px solid #55EFC430;border-radius:16px;padding:14px 18px;margin-bottom:12px;}
+  .w-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:10px;}
+  .w-item{background:#0A0A14;border-radius:12px;padding:11px 13px;}
+  .w-label{font-size:10px;color:#555;margin-bottom:3px;}
+  .w-val{font-size:18px;font-weight:900;}
+  .w-sub{font-size:10px;color:#444;margin-top:2px;}
+  .inp{padding:10px 14px;border-radius:10px;border:1px solid #ffffff12;background:#0A0A14;color:#E8E8F0;font-size:13px;font-family:'Heebo',sans-serif;width:100%;outline:none;}
+  .btn{padding:10px 18px;border-radius:10px;border:none;cursor:pointer;font-family:'Heebo',sans-serif;font-weight:700;font-size:13px;}
+  .btn-gold{background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;}
+  .btn-green{background:#55EFC4;color:#000;}
+  .btn-red{background:none;border:1px solid #FF6B6B20;color:#FF6B6B88;cursor:pointer;border-radius:6px;padding:3px 8px;font-size:11px;font-family:'Heebo',sans-serif;}
+  .btn-edit{background:none;border:1px solid #ffffff12;color:#666;cursor:pointer;border-radius:6px;padding:3px 8px;font-size:11px;font-family:'Heebo',sans-serif;}
+  .txn-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #ffffff05;}
+  .budget-bar-bg{background:#0A0A14;border-radius:5px;height:7px;overflow:hidden;margin-top:4px;}
+  .budget-bar{height:100%;border-radius:5px;transition:width .4s;}
+  .cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .alert-box{background:#1A0808;border:1px solid #FF6B6B30;border-radius:14px;padding:12px 16px;margin-bottom:12px;position:relative;}
+  .transfer-card{background:#0E1F0E;border:1px solid #55EFC425;border-radius:13px;padding:14px;margin-bottom:12px;}
+  select.inp{cursor:pointer;}
+  .pay-toggle{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
+  .pay-opt{padding:9px;border-radius:10px;border:1px solid #ffffff12;background:transparent;color:#555;cursor:pointer;font-size:12px;font-family:'Heebo',sans-serif;font-weight:600;transition:.15s;}
+  @media(max-width:600px){.grid2,.grid4{grid-template-columns:1fr 1fr;}.w-grid{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div class="topbar-title">💛🖤 ניהול תקציב אישי</div>
+        <h1 class="topbar-h1">דשבורד ההוצאות שלי</h1>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <div class="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">טוען...</span></div>
+        <button class="nav-btn active" onclick="setView('dashboard')" id="nav-dashboard">📊 סקירה</button>
+        <button class="nav-btn" onclick="setView('income')" id="nav-income">💵 הכנסות</button>
+        <button class="nav-btn" onclick="setView('transactions')" id="nav-transactions">📋 עסקאות</button>
+        <button class="nav-btn" onclick="setView('add')" id="nav-add">➕ הוסף</button>
+      </div>
+    </div>
+    <div class="topbar-row2" id="month-tabs"></div>
+  </div>
+</div>
+
+<div class="content" id="main-content"></div>
+
+<script>
+// ── SHARED localStorage KEYS (same as chat!) ──
+const LS={wallet:"bgt_wallet",txns:"bgt_txns",income:"bgt_income",transfers:"bgt_transfers"};
+const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
+
+const MONTHS_HE=["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
+const COLORS={food:"#FF6B6B",transport:"#4ECDC4",hobbies:"#A29BFE",social:"#FD79A8",beitar:"#FFD700",savings:"#55EFC4",other:"#636e72"};
+const CAT_LABELS={food:"🍔 אוכל",transport:"🚂 תחבורה",hobbies:"🎮 תחביבים",social:"👥 חברה",beitar:"⚽ ביתר",savings:"💰 חיסכון",other:"📦 אחר"};
+const BUDGETS={food:200,social:150,beitar:200,transport:100,hobbies:100,other:50};
+const PAY_LABELS={cash:"💵 מזומן",credit:"💳 אשראי",bit:"🔵 ביט"};
+const PAY_COLORS={cash:"#55EFC4",credit:"#4ECDC4",bit:"#6C9BFF"};
+const W_NAMES={cash:"מזומן",bank:"בנק",bit:"ביט"};
+
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function nowMonth(){const d=new Date();return`${MONTHS_HE[d.getMonth()]} ${d.getFullYear()}`;}
+function monthKey(s){try{const d=new Date(s);return`${MONTHS_HE[d.getMonth()]} ${d.getFullYear()}`;}catch{return nowMonth();}}
+
+function categorize(desc){
+  const d=(desc||"").toLowerCase();
+  if(/שוורמה|פלאפל|אוכל|מסעדה|קפה|סושי|פיצה|מאפה|עוגה|סנדוויץ|ארוחה|טעמי|מים/.test(d))return"food";
+  if(/רכבת|אוטובוס|מונית|אוברה|גט|טקסי|דלק|נסיעה|רב.קו/.test(d))return"transport";
+  if(/ביתר|ירושלים|אצטדיון/.test(d))return"beitar";
+  if(/חבר|חברה|בילוי|מסיבה|קולנוע|סרט|בר/.test(d))return"social";
+  if(/ספר|משחק|אוזניות|גיימינג|נטפליקס|ספוטיפיי/.test(d))return"hobbies";
+  if(/חיסכון|שמירה/.test(d))return"savings";
+  return"other";
+}
+
+// ── STATE ──
+let wallet={cash:1300,bank:1620,bit:0};
+let allTxns={};
+let income=[];
+let transfers=[];
+let activeMonth=nowMonth();
+let currentView="dashboard";
+let pieChart=null,barChart=null;
+
+function loadAll(){
+  wallet=lsGet(LS.wallet,{cash:1300,bank:1620,bit:0});
+  allTxns=lsGet(LS.txns,{});
+  income=lsGet(LS.income,[]);
+  transfers=lsGet(LS.transfers,[]);
+  const months=Object.keys(allTxns);
+  if(months.length>0&&!allTxns[activeMonth]) activeMonth=months[months.length-1];
+  updateSyncStatus();
+  renderAll();
+}
+
+function updateSyncStatus(){
+  document.getElementById("sync-text").textContent="מעודכן " + new Date().toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});
+  document.getElementById("sync-dot").style.background="#55EFC4";
+}
+
+// ── BALANCES ──
+function getBalances(){
+  const cur=allTxns[activeMonth]||[];
+  const ci=income.filter(i=>i.type==="cash").reduce((s,i)=>s+i.amount,0);
+  const bi=income.filter(i=>i.type==="bank").reduce((s,i)=>s+i.amount,0);
+  const bti=income.filter(i=>i.type==="bit").reduce((s,i)=>s+i.amount,0);
+  const cs=cur.filter(t=>t.type==="cash"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
+  const bs=cur.filter(t=>t.type==="credit"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
+  const bts=cur.filter(t=>t.type==="bit"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
+  let ca=0,ba=0,bta=0;
+  for(const tr of transfers){
+    if(tr.from==="cash")ca-=tr.amount;if(tr.to==="cash")ca+=tr.amount;
+    if(tr.from==="bank")ba-=tr.amount;if(tr.to==="bank")ba+=tr.amount;
+    if(tr.from==="bit")bta-=tr.amount;if(tr.to==="bit")bta+=tr.amount;
+  }
+  return{
+    cash:wallet.cash+ci-cs+ca,bank:wallet.bank+bi-bs+ba,bit:(wallet.bit||0)+bti-bts+bta,
+    cashSpent:cs,bankSpent:bs,bitSpent:bts,
+    cashIncome:ci,bankIncome:bi,bitIncome:bti,
+    totalSpent:cur.filter(t=>t.category!=="savings").reduce((s,t)=>s+t.amount,0),
+    totalSaved:cur.filter(t=>t.category==="savings").reduce((s,t)=>s+t.amount,0),
+    cur
+  };
+}
+
+function byCat(txns){
+  const r={};
+  for(const t of txns)if(t.category!=="savings")r[t.category]=(r[t.category]||0)+t.amount;
+  return r;
+}
+
+// ── RENDER ──
+function setView(v){
+  currentView=v;
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("nav-"+v)?.classList.add("active");
+  renderAll();
+}
+
+function setMonth(m){
+  activeMonth=m;
+  document.querySelectorAll(".month-btn").forEach(b=>{b.classList.toggle("active",b.dataset.month===m);});
+  renderAll();
+}
+
+function renderAll(){
+  renderMonthTabs();
+  const{cash,bank,bit,cashSpent,bankSpent,bitSpent,cashIncome,bankIncome,bitIncome,totalSpent,totalSaved,cur}=getBalances();
+  const total=cash+bank+bit;
+  const cats=byCat(cur);
+  const maxCat=Math.max(1,...Object.values(cats));
+  const yearTxns=Object.values(allTxns).flat();
+  const yearCats=byCat(yearTxns);
+  const yearSpent=yearTxns.filter(t=>t.category!=="savings").reduce((s,t)=>s+t.amount,0);
+  const alerts=Object.entries(cats).filter(([k,v])=>k!=="savings"&&BUDGETS[k]&&v>BUDGETS[k]);
+
+  const content=document.getElementById("main-content");
+
+  // WALLET (always shown)
+  let walletHtml=`
+    <div class="wallet-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:12px;color:#55EFC4;font-weight:700;">💳 יתרות נוכחיות</div>
+        <button class="btn-edit" onclick="toggleEditWallet()">✏️ עדכן</button>
+      </div>
+      <div id="wallet-edit" style="display:none;margin-top:10px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;">
+          <div><div style="font-size:11px;color:#888;margin-bottom:3px;">💵 מזומן</div><input class="inp" id="w-cash" type="number" value="${wallet.cash}" style="padding:7px 10px;"></div>
+          <div><div style="font-size:11px;color:#888;margin-bottom:3px;">🏦 בנק</div><input class="inp" id="w-bank" type="number" value="${wallet.bank}" style="padding:7px 10px;"></div>
+          <div><div style="font-size:11px;color:#888;margin-bottom:3px;">🔵 ביט</div><input class="inp" id="w-bit" type="number" value="${wallet.bit||0}" style="padding:7px 10px;"></div>
+          <button class="btn btn-green" onclick="saveWallet()" style="padding:8px 16px;white-space:nowrap;">שמור</button>
+        </div>
+      </div>
+      <div class="w-grid">
+        ${[{l:"💵 מזומן",v:cash,s:`−${cashSpent}₪`,c:"#55EFC4"},{l:"🏦 בנק",v:bank,s:`−${bankSpent}₪`,c:"#4ECDC4"},{l:"🔵 ביט",v:bit,s:`−${bitSpent}₪`,c:"#6C9BFF"},{l:"💰 סה״כ",v:total,s:total>=0?"✅":"⚠️",c:total>=0?"#FFD700":"#FF6B6B"}].map(b=>`
+          <div class="w-item" style="border:1px solid ${b.c}18;">
+            <div class="w-label">${b.l}</div>
+            <div class="w-val" style="color:${b.c};">${b.v}₪</div>
+            <div class="w-sub">${b.s}</div>
+          </div>`).join("")}
+      </div>
+    </div>`;
+
+  let alertHtml="";
+  if(alerts.length>0){
+    alertHtml=`<div class="alert-box"><div style="font-size:12px;font-weight:700;color:#FF6B6B;margin-bottom:5px;">🚨 חריגה — ${activeMonth}</div>
+    ${alerts.map(([k,v])=>`<div style="font-size:12px;color:#ffaaaa;">${CAT_LABELS[k]}: חרגת ב-<b style="color:#FF6B6B">${v-BUDGETS[k]}₪</b></div>`).join("")}
+    <button onclick="this.parentElement.remove()" style="position:absolute;top:10px;left:12px;background:none;border:none;color:#555;cursor:pointer;font-size:14px;">✕</button></div>`;
+  }
+
+  let viewHtml="";
+
+  if(currentView==="dashboard"){
+    // Stats row
+    viewHtml+=`<div class="grid4">
+      ${[{l:"סה״כ הוצאות",v:`${Math.round(totalSpent)}₪`,i:"💸",c:"#FF6B6B"},{l:"נחסך",v:`${Math.round(totalSaved)}₪`,i:"💰",c:"#55EFC4"},{l:"עסקאות",v:cur.length,i:"📝",c:"#A29BFE"},{l:"⚽ ביתר",v:`${cats.beitar||0}₪`,i:"🟡",c:"#FFD700"}].map(k=>`
+        <div class="stat-card" style="border-color:${k.c}18;">
+          <div style="font-size:18px;">${k.i}</div>
+          <div class="stat-val" style="color:${k.c};margin-top:3px;">${k.v}</div>
+          <div class="stat-label">${k.l}</div>
+        </div>`).join("")}
+    </div>`;
+
+    // Charts row
+    viewHtml+=`<div class="grid2">
+      <div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">התפלגות — ${activeMonth}</div><canvas id="pie-chart" height="160"></canvas><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${Object.entries(cats).map(([k,v])=>`<span style="font-size:10px;color:#666;display:flex;align-items:center;gap:3px;"><span style="width:6px;height:6px;border-radius:50%;background:${COLORS[k]};display:inline-block;"></span>${CAT_LABELS[k]?.split(" ")[1]||k} ${v}₪</span>`).join("")}</div></div>
+      <div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">חודשים + שנה 📅</div><canvas id="bar-chart" height="160"></canvas></div>
+    </div>`;
+
+    // Yearly summary
+    viewHtml+=`<div class="card" style="border-color:#FFD70018;background:linear-gradient(135deg,#13131F,#1a1400);">
+      <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#FFD700;">📅 סיכום שנתי — ${Math.round(yearSpent)}₪</div>
+      <div class="grid3">${Object.entries(yearCats).filter(([k])=>k!=="savings").map(([k,v])=>`
+        <div style="background:#0A0A14;border-radius:10px;padding:9px 11px;border:1px solid ${COLORS[k]}18;">
+          <div style="font-size:10px;color:#555;margin-bottom:2px;">${CAT_LABELS[k]||k}</div>
+          <div style="font-size:16px;font-weight:800;color:${COLORS[k]};">${v}₪</div>
+        </div>`).join("")}
+      </div>
+    </div>`;
+
+    // Budget bars
+    viewHtml+=`<div class="card"><div style="font-size:12px;font-weight:700;margin-bottom:10px;">📊 ניצול תקציב — ${activeMonth}</div>
+      ${Object.entries(cats).filter(([k])=>k!=="savings"&&BUDGETS[k]).map(([k,v])=>{
+        const pct=Math.min(110,Math.round((v/BUDGETS[k])*100));const over=pct>100;
+        return`<div style="margin-bottom:9px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+            <span style="color:${over?"#FF6B6B":"#bbb"};">${CAT_LABELS[k]} ${over?"⚠️":""}</span>
+            <span style="color:${over?"#FF6B6B":"#555"};">${v}/${BUDGETS[k]}₪</span>
+          </div>
+          <div class="budget-bar-bg"><div class="budget-bar" style="width:${Math.min(100,pct)}%;background:${over?"#FF6B6B":COLORS[k]};"></div></div>
+        </div>`;}).join("")||'<div style="font-size:12px;color:#444;text-align:center;padding:10px;">אין עסקאות עדיין</div>'}
+    </div>`;
+  }
+
+  if(currentView==="income"){
+    viewHtml+=`<div class="grid3">
+      ${[{l:"💵 מזומן",v:cashIncome,c:"#55EFC4"},{l:"🏦 בנק",v:bankIncome,c:"#4ECDC4"},{l:"🔵 ביט",v:bitIncome,c:"#6C9BFF"}].map(k=>`
+        <div class="stat-card" style="border-color:${k.c}20;"><div class="stat-label">${k.l}</div><div class="stat-val" style="color:${k.c};font-size:24px;">${k.v}₪</div></div>`).join("")}
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px;">➕ הוספת הכנסה</div>
+      <div style="display:grid;gap:9px;">
+        <input class="inp" id="inc-desc" placeholder="מקור ההכנסה">
+        <input class="inp" id="inc-amount" type="number" placeholder="סכום (₪)">
+        <input class="inp" id="inc-date" type="date">
+        <div class="pay-toggle">
+          ${[["cash","💵 מזומן","#55EFC4"],["bank","🏦 בנק","#4ECDC4"],["bit","🔵 ביט","#6C9BFF"]].map(([t,l,c])=>`
+            <button class="pay-opt" id="inctype-${t}" onclick="setIncType('${t}')" style="border-color:${t==="cash"?"#55EFC4":"#ffffff12"};background:${t==="cash"?"#55EFC420":"transparent"};color:${t==="cash"?"#55EFC4":"#555"};">${l}</button>`).join("")}
+        </div>
+        <button class="btn btn-gold" onclick="addIncome()">הוסף הכנסה</button>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;">📋 כל ההכנסות</div>
+      ${[...income].sort((a,b)=>b.date.localeCompare(a.date)).map(inc=>`
+        <div class="txn-row">
+          <div style="display:flex;gap:9px;align-items:center;">
+            <div style="width:8px;height:8px;border-radius:50%;background:${PAY_COLORS[inc.type]||"#55EFC4"};"></div>
+            <div><div style="font-size:13px;">${inc.desc}</div><div style="font-size:10px;color:#444;">${inc.date} · ${PAY_LABELS[inc.type]||inc.type}</div></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div style="font-weight:700;color:#55EFC4;font-size:14px;">+${inc.amount}₪</div>
+            <button class="btn-red" onclick="deleteIncome('${inc.id}')">🗑️</button>
+          </div>
+        </div>`).join("")||'<div style="font-size:12px;color:#444;text-align:center;padding:20px;">אין הכנסות עדיין</div>'}
+    </div>`;
+  }
+
+  if(currentView==="transactions"){
+    viewHtml+=`<div class="card">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;">📋 עסקאות — ${activeMonth} (${cur.length})</div>
+      ${[...cur].sort((a,b)=>b.date.localeCompare(a.date)).map((t,i)=>`
+        <div class="txn-row">
+          <div style="display:flex;gap:9px;align-items:center;flex:1;">
+            <div class="cat-dot" style="background:${COLORS[t.category]||"#ddd"};"></div>
+            <div>
+              <div style="font-size:13px;">${t.desc}</div>
+              <div style="font-size:10px;color:#444;">${t.date} · ${CAT_LABELS[t.category]||t.category} · ${PAY_LABELS[t.type]||t.type}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <div style="font-weight:700;font-size:14px;color:${t.category==="beitar"?"#FFD700":t.category==="savings"?"#55EFC4":"#FF6B6B"};">−${t.amount}₪</div>
+            <button class="btn-red" onclick="deleteTxn('${t.id}','${activeMonth}')">🗑️</button>
+          </div>
+        </div>`).join("")||'<div style="font-size:12px;color:#444;text-align:center;padding:20px;">אין עסקאות עדיין</div>'}
+    </div>`;
+  }
+
+  if(currentView==="add"){
+    viewHtml+=`
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px;">➕ הוספת הוצאה</div>
+      <div style="display:grid;gap:9px;">
+        <input class="inp" id="exp-desc" placeholder="מה קנית?">
+        <input class="inp" id="exp-amount" type="number" placeholder="סכום (₪)">
+        <input class="inp" id="exp-date" type="date">
+        <select class="inp" id="exp-cat">${Object.entries(CAT_LABELS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select>
+        <div class="pay-toggle">
+          ${[["cash","💵 מזומן","#55EFC4"],["credit","💳 אשראי","#4ECDC4"],["bit","🔵 ביט","#6C9BFF"]].map(([t,l,c])=>`
+            <button class="pay-opt" id="exptype-${t}" onclick="setExpType('${t}')" style="border-color:${t==="cash"?"#55EFC4":"#ffffff12"};background:${t==="cash"?"#55EFC420":"transparent"};color:${t==="cash"?"#55EFC4":"#555"};">${l}</button>`).join("")}
+        </div>
+        <button class="btn btn-gold" onclick="addExpense()">הוסף הוצאה</button>
+      </div>
+    </div>
+    <div class="transfer-card">
+      <div style="font-size:12px;font-weight:700;color:#55EFC4;margin-bottom:12px;">🔄 העברה בין ארנקים</div>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr 1fr;gap:8px;align-items:end;">
+        <div>
+          <div style="font-size:11px;color:#888;margin-bottom:3px;">מ</div>
+          <select class="inp" id="tr-from" style="padding:8px 10px;">
+            <option value="cash">💵 מזומן</option><option value="bank">🏦 בנק</option><option value="bit">🔵 ביט</option>
+          </select>
+        </div>
+        <div style="color:#55EFC4;font-size:18px;padding-bottom:8px;">←</div>
+        <div>
+          <div style="font-size:11px;color:#888;margin-bottom:3px;">ל</div>
+          <select class="inp" id="tr-to" style="padding:8px 10px;">
+            <option value="bit">🔵 ביט</option><option value="cash">💵 מזומן</option><option value="bank">🏦 בנק</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#888;margin-bottom:3px;">סכום ₪</div>
+          <input class="inp" id="tr-amount" type="number" placeholder="0" style="padding:8px 10px;">
+        </div>
+      </div>
+      <button class="btn btn-green" onclick="doTransfer()" style="width:100%;margin-top:10px;">העבר ✓</button>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px;">📁 ייבוא מ-CSV (דיסקונט)</div>
+      <label style="display:block;padding:16px;border-radius:10px;border:2px dashed #ffffff12;text-align:center;cursor:pointer;color:#555;font-size:13px;">📂 לחץ להעלאת CSV<input type="file" accept=".csv,.CSV" onchange="handleCSV(event)" style="display:none;"></label>
+      <div id="csv-status" style="margin-top:8px;font-size:11px;display:none;"></div>
+    </div>`;
+  }
+
+  content.innerHTML = walletHtml + alertHtml + viewHtml;
+
+  // Charts
+  if(currentView==="dashboard"){
+    // Pie
+    const pieCtx=document.getElementById("pie-chart")?.getContext("2d");
+    if(pieCtx&&Object.keys(cats).length>0){
+      if(pieChart)pieChart.destroy();
+      pieChart=new Chart(pieCtx,{type:"doughnut",data:{labels:Object.keys(cats).map(k=>CAT_LABELS[k]||k),datasets:[{data:Object.values(cats),backgroundColor:Object.keys(cats).map(k=>COLORS[k]||"#ddd"),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}₪`}}},cutout:"60%"}});
+    }
+    // Bar
+    const barCtx=document.getElementById("bar-chart")?.getContext("2d");
+    if(barCtx){
+      if(barChart)barChart.destroy();
+      const months=Object.keys(allTxns);
+      const allMonthsAndYear=[...months,"שנה"];
+      const datasets=Object.keys(COLORS).filter(k=>k!=="savings").map(k=>({label:CAT_LABELS[k]||k,data:[...months.map(m=>{const mt=allTxns[m]||[];return mt.filter(t=>t.category===k).reduce((s,t)=>s+t.amount,0);}),Object.values(allTxns).flat().filter(t=>t.category===k).reduce((s,t)=>s+t.amount,0)],backgroundColor:COLORS[k],stack:"a"}));
+      barChart=new Chart(barCtx,{type:"bar",data:{labels:allMonthsAndYear.map(m=>m.split(" ")[0]),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label.split(" ").slice(1).join(" ")}: ${Math.round(ctx.parsed.y)}₪`}}},scales:{x:{stacked:true,ticks:{color:"#555",font:{size:9}},grid:{display:false}},y:{stacked:true,ticks:{color:"#444",font:{size:9}},grid:{color:"#ffffff07"}}}}});
+    }
+  }
+
+  // Init form states
+  window._expType=window._expType||"cash";
+  window._incType=window._incType||"cash";
+}
+
+function renderMonthTabs(){
+  const months=Object.keys(allTxns);
+  const tabs=document.getElementById("month-tabs");
+  if(!tabs)return;
+  tabs.innerHTML=months.map(m=>`<button class="month-btn${m===activeMonth?" active":""}" data-month="${m}" onclick="setMonth('${m}')">${m}</button>`).join("");
+}
+
+// ── ACTIONS ──
+let _expType="cash",_incType="cash";
+function setExpType(t){
+  _expType=t;
+  ["cash","credit","bit"].forEach(k=>{
+    const b=document.getElementById("exptype-"+k);if(!b)return;
+    const c=k==="cash"?"#55EFC4":k==="credit"?"#4ECDC4":"#6C9BFF";
+    b.style.borderColor=k===t?c:"#ffffff12";b.style.background=k===t?c+"20":"transparent";b.style.color=k===t?c:"#555";
+  });
+}
+function setIncType(t){
+  _incType=t;
+  ["cash","bank","bit"].forEach(k=>{
+    const b=document.getElementById("inctype-"+k);if(!b)return;
+    const c=k==="cash"?"#55EFC4":k==="bank"?"#4ECDC4":"#6C9BFF";
+    b.style.borderColor=k===t?c:"#ffffff12";b.style.background=k===t?c+"20":"transparent";b.style.color=k===t?c:"#555";
+  });
+}
+
+function toggleEditWallet(){
+  const el=document.getElementById("wallet-edit");
+  el.style.display=el.style.display==="none"?"block":"none";
+}
+function saveWallet(){
+  wallet={cash:parseFloat(document.getElementById("w-cash").value)||0,bank:parseFloat(document.getElementById("w-bank").value)||0,bit:parseFloat(document.getElementById("w-bit").value)||0};
+  lsSet(LS.wallet,wallet);document.getElementById("wallet-edit").style.display="none";renderAll();
+}
+
+function addExpense(){
+  const desc=document.getElementById("exp-desc").value.trim();
+  const amount=parseFloat(document.getElementById("exp-amount").value);
+  const date=document.getElementById("exp-date").value||todayStr();
+  const cat=document.getElementById("exp-cat").value;
+  if(!desc||!amount)return;
+  const month=monthKey(date);
+  if(!allTxns[month])allTxns[month]=[];
+  allTxns[month].push({id:Date.now(),date,desc,amount,category:cat,type:_expType});
+  lsSet(LS.txns,allTxns);
+  activeMonth=month;
+  document.getElementById("exp-desc").value="";document.getElementById("exp-amount").value="";
+  renderAll();
+}
+
+function addIncome(){
+  const desc=document.getElementById("inc-desc").value.trim();
+  const amount=parseFloat(document.getElementById("inc-amount").value);
+  const date=document.getElementById("inc-date").value||todayStr();
+  if(!desc||!amount)return;
+  income.push({id:Date.now(),date,desc,amount,type:_incType});
+  lsSet(LS.income,income);
+  document.getElementById("inc-desc").value="";document.getElementById("inc-amount").value="";
+  renderAll();
+}
+
+function deleteTxn(id,month){
+  if(!confirm("למחוק עסקה זו?"))return;
+  allTxns[month]=(allTxns[month]||[]).filter(t=>String(t.id)!==String(id));
+  lsSet(LS.txns,allTxns);renderAll();
+}
+
+function deleteIncome(id){
+  if(!confirm("למחוק הכנסה זו?"))return;
+  income=income.filter(i=>String(i.id)!==String(id));
+  lsSet(LS.income,income);renderAll();
+}
+
+function doTransfer(){
+  const from=document.getElementById("tr-from").value;
+  const to=document.getElementById("tr-to").value;
+  const amount=parseFloat(document.getElementById("tr-amount").value);
+  if(!amount||amount<=0||from===to){alert("בדוק פרטים");return;}
+  transfers.push({id:Date.now(),date:todayStr(),from,to,amount});
+  lsSet(LS.transfers,transfers);
+  document.getElementById("tr-amount").value="";
+  alert(`✅ הועבר ${amount}₪ מ${W_NAMES[from]} ל${W_NAMES[to]}`);
+  renderAll();
+}
+
+function handleCSV(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=(ev)=>{
+    const text=ev.target.result.replace(/^\uFEFF/,"");
+    const delim=text.split(/\r?\n/)[0].includes(";")?";":","
+    const lines=text.trim().split(/\r?\n/);
+    const results=[];
+    for(let i=1;i<lines.length;i++){
+      if(!lines[i].trim())continue;
+      const cols=lines[i].split(delim).map(c=>c.trim().replace(/"/g,""));
+      const rawDate=cols[0]||"",rawDesc=cols[1]||"עסקה",rawAmt=cols[2]||"";
+      let date=rawDate.replace(/\./g,"/");
+      const dm=date.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+      if(dm)date=`${dm[3].length===2?"20"+dm[3]:dm[3]}-${dm[2].padStart(2,"0")}-${dm[1].padStart(2,"0")}`;
+      const amount=Math.abs(parseFloat(rawAmt.replace(/[₪,\s]/g,"")));
+      if(!isNaN(amount)&&amount>0&&date)results.push({id:Date.now()+i,date,desc:rawDesc,amount,category:categorize(rawDesc),type:"credit"});
+    }
+    if(results.length===0){const s=document.getElementById("csv-status");s.style.display="block";s.style.color="#FF6B6B";s.textContent="❌ לא נמצאו עסקאות";return;}
+    const month=monthKey(results[0].date);
+    if(!allTxns[month])allTxns[month]=[];
+    allTxns[month]=[...(allTxns[month]||[]),...results];
+    lsSet(LS.txns,allTxns);activeMonth=month;
+    const s=document.getElementById("csv-status");s.style.display="block";s.style.color="#55EFC4";s.textContent=`✅ יובאו ${results.length} עסקאות — ${month}`;
+    renderAll();
+  };
+  reader.readAsText(file,"utf-8");e.target.value="";
+}
+
+// ── AUTO REFRESH every 5s (syncs with chat changes) ──
+setInterval(()=>{
+  allTxns=lsGet(LS.txns,{});
+  income=lsGet(LS.income,[]);
+  transfers=lsGet(LS.transfers,[]);
+  wallet=lsGet(LS.wallet,wallet);
+  updateSyncStatus();
+  renderAll();
+},5000);
+
+// ── INIT ──
+loadAll();
+</script>
+</body>
+</html>
