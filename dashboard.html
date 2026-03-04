@@ -9,7 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Heebo',sans-serif;direction:rtl;background:#0A0A14;color:#E8E8F0;min-height:100vh;}
+  body{font-family:'Heebo',sans-serif;direction:rtl;background:#0A0A14;color:#E8E8F0;height:100vh;overflow-y:auto;overflow-x:hidden;}
   .topbar{background:linear-gradient(160deg,#0D0D1F,#111230,#0E1E3A);border-bottom:1px solid #ffffff0c;padding:16px 20px 12px;}
   .topbar-inner{max-width:960px;margin:0 auto;}
   .topbar-title{font-size:10px;letter-spacing:4px;color:#FFD700;font-weight:700;margin-bottom:3px;}
@@ -21,7 +21,7 @@
   .month-btn.active{border-color:#4ECDC4;background:#4ECDC412;color:#4ECDC4;}
   .sync-status{font-size:10px;color:#55EFC4;display:flex;align-items:center;gap:5px;margin-right:auto;}
   .sync-dot{width:6px;height:6px;border-radius:50%;background:#55EFC4;}
-  .content{max-width:960px;margin:0 auto;padding:16px 20px 40px;}
+  .content{max-width:960px;margin:0 auto;padding:16px 20px 40px;min-height:0;}
   .card{background:#13131F;border-radius:16px;padding:16px;margin-bottom:12px;border:1px solid #ffffff07;}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
   .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;}
@@ -68,6 +68,8 @@
         <button class="nav-btn" onclick="setView('income')" id="nav-income">💵 הכנסות</button>
         <button class="nav-btn" onclick="setView('transactions')" id="nav-transactions">📋 עסקאות</button>
         <button class="nav-btn" onclick="setView('add')" id="nav-add">➕ הוסף</button>
+        <button class="nav-btn" onclick="syncAll()">🔄 סנכרן</button>
+        <a href="index.html" class="nav-btn" style="text-decoration:none;background:#FFD70015;border-color:#FFD700;color:#FFD700;">💬 חזור לצ'אט</a>
       </div>
     </div>
     <div class="topbar-row2" id="month-tabs"></div>
@@ -78,9 +80,30 @@
 
 <script>
 // ── SHARED localStorage KEYS (same as chat!) ──
-const LS={wallet:"bgt_wallet",txns:"bgt_txns",income:"bgt_income",transfers:"bgt_transfers"};
+const LS={wallet:"bgt_wallet",txns:"bgt_txns",income:"bgt_income",transfers:"bgt_transfers",debts:"bgt_debts"};
 const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}};
-const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
+const SYNC_URL="https://script.google.com/macros/s/AKfycbxsVKlcH7iGj4gXmpc6o-bAt_zLZ-WOO_AGx-im0CBCcU_nkZ-HEAcMyvzt8YC793ck/exec";
+async function syncPush(key,value){try{await fetch(SYNC_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,value:JSON.stringify(value)})})}catch{}}
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));syncPush(k,v);}catch{}};
+async function syncAll(){
+  try{
+    document.getElementById("sync-text").textContent="מסנכרן...";
+    document.getElementById("sync-dot").style.background="#FFD700";
+    const r=await fetch(SYNC_URL);const d=await r.json();
+    if(!d.ok)throw new Error();
+    const rd=d.data||{};
+    if(rd["bgt_txns"]){allTxns=JSON.parse(rd["bgt_txns"]);localStorage.setItem(LS.txns,rd["bgt_txns"]);}
+    if(rd["bgt_income"]){income=JSON.parse(rd["bgt_income"]);localStorage.setItem(LS.income,rd["bgt_income"]);}
+    if(rd["bgt_wallet"]){wallet=JSON.parse(rd["bgt_wallet"]);localStorage.setItem(LS.wallet,rd["bgt_wallet"]);}
+    if(rd["bgt_transfers"]){transfers=JSON.parse(rd["bgt_transfers"]);localStorage.setItem(LS.transfers,rd["bgt_transfers"]);}
+    if(rd["bgt_debts"]){debts=JSON.parse(rd["bgt_debts"]);localStorage.setItem(LS.debts,rd["bgt_debts"]);}
+    updateSyncStatus();
+    renderAll();
+  }catch{
+    document.getElementById("sync-text").textContent="אין חיבור";
+    document.getElementById("sync-dot").style.background="#FF6B6B";
+  }
+}
 
 const MONTHS_HE=["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
 const COLORS={food:"#FF6B6B",transport:"#4ECDC4",hobbies:"#A29BFE",social:"#FD79A8",beitar:"#FFD700",savings:"#55EFC4",other:"#636e72"};
@@ -107,6 +130,7 @@ function categorize(desc){
 
 // ── STATE ──
 let wallet={cash:1300,bank:1620,bit:0};
+let debts=[];
 let allTxns={};
 let income=[];
 let transfers=[];
@@ -119,6 +143,7 @@ function loadAll(){
   allTxns=lsGet(LS.txns,{});
   income=lsGet(LS.income,[]);
   transfers=lsGet(LS.transfers,[]);
+  debts=lsGet(LS.debts,[]);
   const months=Object.keys(allTxns);
   if(months.length>0&&!allTxns[activeMonth]) activeMonth=months[months.length-1];
   updateSyncStatus();
@@ -261,6 +286,34 @@ function renderAll(){
           </div>
           <div class="budget-bar-bg"><div class="budget-bar" style="width:${Math.min(100,pct)}%;background:${over?"#FF6B6B":COLORS[k]};"></div></div>
         </div>`;}).join("")||'<div style="font-size:12px;color:#444;text-align:center;padding:10px;">אין עסקאות עדיין</div>'}
+    </div>`;
+
+    // Debts section
+    const unpaidDebts=debts.filter(d=>!d.paid);
+    const totalDebt=unpaidDebts.reduce((s,d)=>s+d.amount,0);
+    viewHtml+=`<div class="card" style="border-color:#6C9BFF25;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:700;color:#6C9BFF;">💳 חייבים לי — ${totalDebt}₪</div>
+        <button class="btn-edit" onclick="toggleAddDebt()">+ הוסף</button>
+      </div>
+      <div id="add-debt-form" style="display:none;background:#0A0A14;border-radius:10px;padding:11px;margin-bottom:10px;display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;">
+          <input class="inp" id="debt-person" placeholder="שם" style="padding:7px 10px;">
+          <input class="inp" id="debt-amount" type="number" placeholder="סכום ₪" style="padding:7px 10px;">
+          <button class="btn btn-green" onclick="addDebt()" style="padding:7px 14px;white-space:nowrap;">הוסף</button>
+        </div>
+        <input class="inp" id="debt-desc" placeholder="הערה (אופציונלי)" style="padding:7px 10px;margin-top:7px;">
+      </div>
+      ${unpaidDebts.length===0?'<div style="font-size:12px;color:#444;text-align:center;padding:10px;">אין חובות פתוחים</div>':
+        unpaidDebts.map(d=>`
+          <div class="txn-row">
+            <div><div style="font-size:13px;">${d.person}</div><div style="font-size:10px;color:#444;">${d.desc||""} · ${d.date}</div></div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <div style="font-weight:700;color:#6C9BFF;font-size:14px;">+${d.amount}₪</div>
+              <button class="btn-green" onclick="markPaid('${d.id}')" style="padding:3px 9px;border-radius:7px;font-size:11px;border:none;cursor:pointer;">שולם ✓</button>
+              <button class="btn-red" onclick="deleteDebt('${d.id}')">🗑️</button>
+            </div>
+          </div>`).join("")}
     </div>`;
   }
 
@@ -504,11 +557,28 @@ function handleCSV(e){
   reader.readAsText(file,"utf-8");e.target.value="";
 }
 
+function toggleAddDebt(){const el=document.getElementById('add-debt-form');el.style.display=el.style.display==='none'?'grid':'none';}
+function addDebt(){
+  const person=document.getElementById('debt-person').value.trim();
+  const amount=parseFloat(document.getElementById('debt-amount').value);
+  const desc=document.getElementById('debt-desc').value.trim();
+  if(!person||!amount)return;
+  debts.push({id:Date.now(),date:new Date().toISOString().slice(0,10),person,amount,desc,paid:false});
+  lsSet(LS.debts,debts);
+  document.getElementById('debt-person').value='';
+  document.getElementById('debt-amount').value='';
+  document.getElementById('debt-desc').value='';
+  renderAll();
+}
+function markPaid(id){debts=debts.map(d=>String(d.id)===String(id)?{...d,paid:true}:d);lsSet(LS.debts,debts);renderAll();}
+function deleteDebt(id){if(!confirm('למחוק?'))return;debts=debts.filter(d=>String(d.id)!==String(id));lsSet(LS.debts,debts);renderAll();}
+
 // ── AUTO REFRESH every 5s (syncs with chat changes) ──
 setInterval(()=>{
   allTxns=lsGet(LS.txns,{});
   income=lsGet(LS.income,[]);
   transfers=lsGet(LS.transfers,[]);
+  debts=lsGet(LS.debts,[]);
   wallet=lsGet(LS.wallet,wallet);
   updateSyncStatus();
   renderAll();
@@ -516,6 +586,8 @@ setInterval(()=>{
 
 // ── INIT ──
 loadAll();
+syncAll();
+setInterval(syncAll,30000);
 </script>
 </body>
 </html>
