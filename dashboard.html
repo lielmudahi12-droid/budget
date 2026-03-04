@@ -636,9 +636,15 @@ setInterval(()=>{
 },5000);
 
 // ── INIT ──
-loadAll();
-syncAll();
-setInterval(syncAll,30000);
+// הצג מסך טעינה ומשוך מ-Sheets קודם
+document.getElementById('main-content').innerHTML='<div style="text-align:center;padding:60px;color:#FFD700;font-size:18px;">⚽ טוען נתונים...</div>';
+(async()=>{
+  // תמיד קודם מ-Sheets, אחר כך מ-localStorage
+  await syncAll();
+  // אם syncAll נכשל, טען מ-localStorage
+  if(Object.keys(allTxns).length===0) loadAll();
+  setInterval(syncAll,30000);
+})();
 </script>
 <!-- WALLET MODAL -->
 <div id="wallet-modal" style="display:none;position:fixed;inset:0;background:#000000aa;z-index:1000;align-items:center;justify-content:center;">
