@@ -324,7 +324,7 @@ async function send(){
 {"reply":"תגובה","action":"add_expense|add_income|ask_type|transfer|add_debt|pay_debt|query|none","transaction":{"desc":"","amount":0,"category":"food|transport|hobbies|social|beitar|savings|other","type":"cash|credit|bit","date":"YYYY-MM-DD","is_income":false},"transfer":{"from":"cash|bank|bit","to":"cash|bank|bit","amount":0},"debt":{"person":"שם","amount":0,"desc":""}}`;
 
   try{
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,{
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,{
       method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({contents:[{parts:[{text:sys+"\n\nהמשתמש: "+text}]}],generationConfig:{maxOutputTokens:500,temperature:0.3}})
     });
