@@ -155,7 +155,8 @@
 const LS={wallet:"bgt_wallet",txns:"bgt_txns",income:"bgt_income",apikey:"bgt_apikey",transfers:"bgt_transfers",chatHistory:"bgt_chat_history",debts:"bgt_debts"};
 const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}};
 const SYNC_URL="https://script.google.com/macros/s/AKfycbxsVKlcH7iGj4gXmpc6o-bAt_zLZ-WOO_AGx-im0CBCcU_nkZ-HEAcMyvzt8YC793ck/exec";
-async function syncPush(key,value){try{await fetch(SYNC_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,value:JSON.stringify(value)})})}catch{}}
+let _sTimer=null,_sQ={};
+function syncPush(key,value){_sQ[key]=value;clearTimeout(_sTimer);_sTimer=setTimeout(async()=>{for(const[k,v]of Object.entries(_sQ)){try{await fetch(SYNC_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:k,value:JSON.stringify(v)})});}catch{}delete _sQ[k];}},2500);}
 async function syncPull(key){try{const r=await fetch(SYNC_URL+"?key="+key);const d=await r.json();return d.value?JSON.parse(d.value):null;}catch{return null;}}
 async function syncAll(){
   try{
@@ -294,7 +295,7 @@ function setQuick(q){document.getElementById("msginput").value=q;document.getEle
 async function send(){
   const inp=document.getElementById("msginput");
   const text=inp.value.trim();
-  if(!text||loading)return;
+  if(!text||text.length<2||loading)return;
   inp.value="";document.getElementById("sendbtn").disabled=true;
   addUserMsg(text);
   if(!apiKey){addBotMsg("⚠️ אין מפתח Gemini. עבור ללשונית 📲 והגדר מפתח חינמי.");return;}
@@ -304,32 +305,42 @@ async function send(){
   const pending=window._pendingTxn?JSON.stringify(window._pendingTxn):"אין";
 
   const totalDebt=debts.filter(d=>!d.paid).reduce((s,d)=>s+d.amount,0);
-  const sys=`אתה בוט ניהול תקציב. ענה בעברית קצרה וידידותית.
-יתרות: מזומן=${cashBal}₪, בנק=${bankBal}₪, ביט=${bitBal}₪, חובות שחייבים לי: ${totalDebt}₪
-הוצאות ${nowMonth()}: ${totalSpent}₪
-עסקאות אחרונות: ${JSON.stringify(currentTxns.slice(-5))}
-עסקה ממתינה: ${pending}
+  // סיכום קטגוריות במקום רשימת עסקאות - חיסכון 80% טוקנים
+  const cats=currentTxns.reduce((r,t)=>{r[t.category]=(r[t.category]||0)+t.amount;return r;},{});
+  const catStr=Object.entries(cats).map(([k,v])=>k+":"+v).join(" ")||"none";
+  const sys="Budget bot. Hebrew ONLY. Max 10 words. Emojis. Transaction confirmed->say: \u05e8\u05e9\u05de\u05ea\u05d9 \ud83d\udc4d + summary.\nS:cash="+cashBal+" bank="+bankBal+" bit="+bitBal+" debt="+totalDebt+" spent="+totalSpent+"\nC:"+catStr+"\nP:"+pending+"\nR:no_type->ask_type|expense->add_expense|income->add_income|transfer->transfer|owes->add_debt|paid->pay_debt\nT:cash|credit|bit K:food|transport|hobbies|social|beitar|savings|other\nJSON:{reply:\'\',action:\'\',transaction:{desc:\'\',amount:0,category:\'\',type:\'\',date:\'YYYY-MM-DD\',is_income:false},transfer:{from:\'\',to:\'\',amount:0},debt:{person:\'\',amount:0,desc:\'\'}}";
 
-חוקים:
-1. עסקה ממתינה + המשתמש ענה אופן תשלום → השלם אותה.
-2. הוצאה/הכנסה בלי אופן תשלום → action=ask_type, שאל "במזומן, אשראי או ביט?".
-3. הכנסה (קיבל כסף) → add_income, is_income:true.
-4. הוצאה (קנייה) → add_expense, is_income:false.
-5. העברה בין ארנקים → action=transfer.
-6. type: cash=מזומן, credit=אשראי/כרטיס, bit=ביט.
-7. מישהו חייב לי כסף → action=add_debt, debt:{person,amount,desc}.
-8. החזיר לי כסף (שילם חוב) → action=pay_debt, debt:{person}.
+  // retry אוטומטי עד 2 פעמים
+  async function callAPI(prompt,tries){
+    for(let i=0;i<=tries;i++){
+      const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key="+apiKey,{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:300,temperature:0.2}})
+      });
+      const d=await r.json();
+      if(!d.error)return d;
+      if(d.error.status==="RESOURCE_EXHAUSTED"&&i<tries){
+        await new Promise(r=>setTimeout(r,3000*(i+1)));
+        continue;
+      }
+      return d;
+    }
+  }
 
-החזר JSON בלבד:
-{"reply":"תגובה","action":"add_expense|add_income|ask_type|transfer|add_debt|pay_debt|query|none","transaction":{"desc":"","amount":0,"category":"food|transport|hobbies|social|beitar|savings|other","type":"cash|credit|bit","date":"YYYY-MM-DD","is_income":false},"transfer":{"from":"cash|bank|bit","to":"cash|bank|bit","amount":0},"debt":{"person":"שם","amount":0,"desc":""}}`;
-
+  // 2 הודעות אחרונות כהיסטוריה
+  const msgEls=[...document.querySelectorAll(".bubble-wrap")].slice(-4);
+  const hist=msgEls.map(w=>(w.classList.contains("user")?"U:":"A:")+w.querySelector(".bubble")?.childNodes[0]?.textContent?.trim()).filter(Boolean).join("\n");
   try{
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,{
-      method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({contents:[{parts:[{text:sys+"\n\nהמשתמש: "+text}]}],generationConfig:{maxOutputTokens:500,temperature:0.3}})
-    });
-    const data=await res.json();te.remove();
-    if(data.error){addBotMsg("שגיאת API: "+(data.error.message||"נסה שוב")+"\n\nוודא שהמפתח תקין בלשונית 📲");loading=false;return;}
+    const data=await callAPI(sys+(hist?"\nHistory:\n"+hist:"")+"\nU:"+text,2);
+    te.remove();
+    if(!data||data.error){
+      if(data&&data.error.status==="RESOURCE_EXHAUSTED"){
+        addBotMsg("⚠️ Gemini עמוס — ניסיתי 3 פעמים. נסה שוב בעוד רגע.");
+      } else {
+        addBotMsg("שגיאת API: "+(data&&data.error.message||"נסה שוב")+"\n\nוודא שהמפתח תקין בלשונית 📲");
+      }
+      loading=false;return;
+    }
     const raw=data.candidates?.[0]?.content?.parts?.[0]?.text||"{}";
     let p;try{p=JSON.parse(raw.replace(/```json|```/g,"").trim());}catch{p={reply:raw,action:"none"};}
 
@@ -371,7 +382,7 @@ async function send(){
     if(p.action==="add_expense"&&p.transaction?.amount){
       const t=p.transaction;const month=monthKey(t.date||todayStr());
       const newT={id:Date.now(),date:t.date||todayStr(),desc:t.desc||text,amount:t.amount,category:t.category||categorize(t.desc||text),type:t.type||"cash"};
-      if(!txns[month])txns[month]=[];txns[month].push(newT);lsSet(LS.txns,txns);
+      if(!txns[month])txns[month]=[];txns[month].push(newT);lsSet(LS.txns,txns);if(navigator.vibrate)navigator.vibrate(50);
       chip={...newT,income:false};window._pendingTxn=null;
     }
 
@@ -482,12 +493,11 @@ function switchView(v){
 document.addEventListener("DOMContentLoaded",()=>{
   if(apiKey)document.getElementById('apikey-input').value=apiKey;
   restoreChatHistory();
-  syncAll();
-  setInterval(syncAll, 30000);
+  syncAll(); // סנכרון אחד בטעינה בלבד
   const{cash,bank,bit}=getBalances();
   addBotMsg(`היי! 👋 אני הבוט של התקציב שלך.\n\n💵 מזומן: ${cash}₪  🏦 בנק: ${bank}₪  🔵 ביט: ${bit}₪\n\nמה אני יכול לעשות:\n• לרשום הוצאה / הכנסה\n• לרשום העברה בין ארנקים\n• לנהל חובות (מי חייב לי)\n• לענות על שאלות תקציב`+(apiKey?"\n\n✅ Gemini מוכן!":"\n\n⚙️ כנס ל-📲 להגדיר מפתח Gemini"));
-  document.getElementById("msginput").addEventListener("input",()=>{
-    document.getElementById("sendbtn").disabled=!document.getElementById("msginput").value.trim();
+  document.getElementById("msginput").addEventListener("input",(e)=>{
+    document.getElementById("sendbtn").disabled=!e.target.value.trim();
   });
 });
 </script>
