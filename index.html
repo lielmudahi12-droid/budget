@@ -1,87 +1,81 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="בוט תקציב ⚽">
-<meta name="theme-color" content="#0A0A14">
-<title>בוט תקציב ⚽💛🖤</title>
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;800;900&display=swap" rel="stylesheet">
-<style>
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-  body{font-family:'Heebo',sans-serif;direction:rtl;background:#0A0A14;color:#E8E8F0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;max-width:430px;margin:0 auto;}
-  #topbar{background:linear-gradient(135deg,#0D1F0D,#0A1A0A);border-bottom:1px solid #FFD70022;padding:11px 14px 9px;flex-shrink:0;}
-  #topbar .inner{display:flex;align-items:center;gap:10px;}
-  #avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#FFD700,#FFA500);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
-  #botname{font-size:13px;font-weight:800;color:#fff;}
-  #syncstatus{font-size:9px;display:flex;align-items:center;gap:4px;margin-top:2px;}
-  #syncdot{width:5px;height:5px;border-radius:50%;background:#55EFC4;flex-shrink:0;}
-  #synctext{color:#55EFC4;}
-  #tabs{display:flex;gap:5px;margin-right:auto;}
-  .tab{padding:5px 9px;border-radius:11px;border:1px solid #ffffff15;background:transparent;color:#555;cursor:pointer;font-size:12px;font-family:'Heebo',sans-serif;transition:.2s;}
-  .tab.active{border-color:#FFD700;background:#FFD70018;color:#FFD700;}
-  .view{display:none;flex:1;flex-direction:column;overflow:hidden;}
-  .view.active{display:flex;}
-  #messages{flex:1;overflow-y:auto;padding:10px 11px 0;display:flex;flex-direction:column;gap:7px;}
-  .bubble-wrap{display:flex;flex-direction:column;}
-  .bubble-wrap.user{align-items:flex-start;}
-  .bubble-wrap.bot{align-items:flex-end;}
-  .bubble{max-width:82%;padding:9px 13px;font-size:13px;line-height:1.65;white-space:pre-wrap;color:#e0e0e0;}
-  .bubble.user{background:linear-gradient(135deg,#1a2a3a,#162030);border-radius:17px 17px 17px 3px;border:1px solid #4ECDC420;}
-  .bubble.bot{background:linear-gradient(135deg,#1a1a0a,#201800);border-radius:17px 17px 3px 17px;border:1px solid #FFD70020;}
-  .txn-chip{margin-top:5px;background:#00000050;border-radius:7px;padding:5px 9px;font-size:11px;display:flex;gap:6px;align-items:center;}
-  .btime{font-size:9px;color:#333;margin-top:1px;padding:0 3px;}
-  .typing{display:flex;gap:4px;align-items:center;padding:9px 14px;}
-  .dot{width:5px;height:5px;border-radius:50%;background:#FFD700;animation:bounce 1s infinite;}
-  .dot:nth-child(2){animation-delay:.2s;} .dot:nth-child(3){animation-delay:.4s;}
-  #quickrow{padding:7px 11px 3px;overflow-x:auto;display:flex;gap:5px;flex-shrink:0;scrollbar-width:none;}
-  #quickrow::-webkit-scrollbar{display:none;}
-  .quick{padding:5px 10px;border-radius:13px;border:1px solid #ffffff10;background:#13131F;color:#777;cursor:pointer;font-size:11px;font-family:'Heebo',sans-serif;white-space:nowrap;flex-shrink:0;}
-  .del-msg{display:none;position:absolute;top:2px;left:2px;background:#FF6B6B;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:9px;cursor:pointer;align-items:center;justify-content:center;}
-  .bubble-wrap:hover .del-msg,.bubble-wrap:active .del-msg{display:flex;}
-  .bubble-wrap{position:relative;}
-  #inputrow{padding:7px 11px 14px;display:flex;gap:7px;flex-shrink:0;}
-  #msginput{flex:1;padding:11px 13px;border-radius:21px;border:1px solid #ffffff13;background:#13131F;color:#E8E8F0;font-size:14px;font-family:'Heebo',sans-serif;outline:none;}
-  #sendbtn{width:43px;height:43px;border-radius:50%;border:none;flex-shrink:0;background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;}
-  #sendbtn:disabled{background:#1a1a1a;color:#333;cursor:default;}
-  #summary-view{overflow-y:auto;}
-  .sum-inner{padding:11px;}
-  .bal-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:8px;}
-  .bal-card{background:#13131F;border-radius:11px;padding:11px 9px;text-align:center;border:1px solid #ffffff08;}
-  .bal-label{font-size:10px;color:#555;margin-bottom:2px;}
-  .bal-val{font-size:16px;font-weight:800;}
-  .total-card{background:#13131F;border:1px solid #FFD70025;border-radius:13px;padding:10px;margin-bottom:10px;text-align:center;}
-  .scard{background:#13131F;border-radius:13px;padding:13px;margin-bottom:9px;}
-  .scard-title{font-size:11px;font-weight:700;color:#888;margin-bottom:9px;}
-  .cat-row{display:flex;align-items:center;gap:7px;margin-bottom:6px;}
-  .cat-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-  .cat-name{flex:1;font-size:11px;color:#bbb;}
-  .cat-val{font-size:12px;font-weight:700;}
-  .cat-bar-bg{width:50px;height:4px;background:#0A0A14;border-radius:3px;overflow:hidden;}
-  .cat-bar{height:100%;border-radius:3px;}
-  .txn-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #ffffff05;}
-  .tr-card{background:#0E1F0E;border:1px solid #55EFC425;border-radius:13px;padding:13px;margin-bottom:9px;}
-  .tr-title{font-size:11px;font-weight:700;color:#55EFC4;margin-bottom:9px;}
-  .tr-row{display:flex;gap:7px;align-items:center;margin-bottom:8px;}
-  .tr-sel{flex:1;padding:8px 10px;border-radius:9px;border:1px solid #ffffff15;background:#0A0A14;color:#E8E8F0;font-size:12px;font-family:'Heebo',sans-serif;outline:none;}
-  .tr-inp{flex:1;padding:8px 10px;border-radius:9px;border:1px solid #ffffff15;background:#0A0A14;color:#E8E8F0;font-size:12px;font-family:'Heebo',sans-serif;outline:none;}
-  .tr-btn{padding:9px 16px;border-radius:9px;border:none;background:linear-gradient(135deg,#55EFC4,#00B894);color:#000;font-weight:800;font-size:12px;cursor:pointer;font-family:'Heebo',sans-serif;}
-  #install-view{overflow-y:auto;padding:16px 14px;}
-  .icard{background:#13131F;border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid #ffffff0a;}
-  .icard-title{font-size:13px;font-weight:700;margin-bottom:12px;}
-  .istep{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start;}
-  .istep-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px;}
-  .istep-text{font-size:12px;color:#bbb;line-height:1.6;}
-  #apisetup{background:#13131F;border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid #ffffff0a;}
-  #apikey-input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #ffffff15;background:#0A0A14;color:#E8E8F0;font-size:13px;font-family:'Heebo',sans-serif;outline:none;margin-bottom:8px;}
-  #apikey-save{width:100%;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;font-weight:800;font-size:14px;cursor:pointer;font-family:'Heebo',sans-serif;}
-  #apikey-status{font-size:11px;color:#888;margin-top:6px;text-align:center;}
-  @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
-  ::-webkit-scrollbar{width:2px;} ::-webkit-scrollbar-thumb{background:#222;border-radius:2px;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="בוט תקציב ⚽">
+    <meta name="theme-color" content="#0A0A14">
+    <title>בוט תקציב ⚽💛🖤</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Heebo', sans-serif; direction: rtl; background: #0A0A14; color: #E8E8F0; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; max-width: 430px; margin: 0 auto; }
+        #topbar { background: linear-gradient(135deg, #0D1F0D, #0A1A0A); border-bottom: 1px solid #FFD70022; padding: 11px 14px 9px; flex-shrink: 0; }
+        #topbar .inner { display: flex; align-items: center; gap: 10px; }
+        #avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #FFD700, #FFA500); display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+        #botname { font-size: 13px; font-weight: 800; color: #fff; }
+        #syncstatus { font-size: 9px; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+        #syncdot { width: 5px; height: 5px; border-radius: 50%; background: #55EFC4; flex-shrink: 0; }
+        #synctext { color: #55EFC4; }
+        #tabs { display: flex; gap: 5px; margin-right: auto; }
+        .tab { padding: 5px 9px; border-radius: 11px; border: 1px solid #ffffff15; background: transparent; color: #555; cursor: pointer; font-size: 12px; font-family: 'Heebo', sans-serif; transition: .2s; }
+        .tab.active { border-color: #FFD700; background: #FFD70018; color: #FFD700; }
+        .view { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+        .view.active { display: flex; }
+        #messages { flex: 1; overflow-y: auto; padding: 10px 11px 0; display: flex; flex-direction: column; gap: 7px; }
+        .bubble-wrap { display: flex; flex-direction: column; position: relative; }
+        .bubble-wrap.user { align-items: flex-start; }
+        .bubble-wrap.bot { align-items: flex-end; }
+        .bubble { max-width: 82%; padding: 9px 13px; font-size: 13px; line-height: 1.65; white-space: pre-wrap; color: #e0e0e0; }
+        .bubble.user { background: linear-gradient(135deg, #1a2a3a, #162030); border-radius: 17px 17px 17px 3px; border: 1px solid #4ECDC420; }
+        .bubble.bot { background: linear-gradient(135deg, #1a1a0a, #201800); border-radius: 17px 17px 3px 17px; border: 1px solid #FFD70020; }
+        .txn-chip { margin-top: 5px; background: #00000050; border-radius: 7px; padding: 5px 9px; font-size: 11px; display: flex; gap: 6px; align-items: center; }
+        .btime { font-size: 9px; color: #444; margin-top: 1px; padding: 0 3px; }
+        .typing { display: flex; gap: 4px; align-items: center; padding: 9px 14px; }
+        .dot { width: 5px; height: 5px; border-radius: 50%; background: #FFD700; animation: bounce 1s infinite; }
+        .dot:nth-child(2) { animation-delay: .2s; } .dot:nth-child(3) { animation-delay: .4s; }
+        #quickrow { padding: 7px 11px 3px; overflow-x: auto; display: flex; gap: 5px; flex-shrink: 0; scrollbar-width: none; }
+        #quickrow::-webkit-scrollbar { display: none; }
+        .quick { padding: 5px 10px; border-radius: 13px; border: 1px solid #ffffff10; background: #13131F; color: #777; cursor: pointer; font-size: 11px; font-family: 'Heebo', sans-serif; white-space: nowrap; flex-shrink: 0; }
+        .del-msg { display: none; position: absolute; top: 2px; left: 2px; background: #FF6B6B; color: #fff; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 9px; cursor: pointer; align-items: center; justify-content: center; z-index: 10; }
+        .bubble-wrap:hover .del-msg { display: flex; }
+        #inputrow { padding: 7px 11px 14px; display: flex; gap: 7px; flex-shrink: 0; }
+        #msginput { flex: 1; padding: 11px 13px; border-radius: 21px; border: 1px solid #ffffff13; background: #13131F; color: #E8E8F0; font-size: 14px; font-family: 'Heebo', sans-serif; outline: none; }
+        #sendbtn { width: 43px; height: 43px; border-radius: 50%; border: none; flex-shrink: 0; background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; cursor: pointer; font-size: 17px; display: flex; align-items: center; justify-content: center; }
+        #sendbtn:disabled { background: #1a1a1a; color: #333; cursor: default; }
+        .sum-inner { padding: 11px; overflow-y: auto; }
+        .bal-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; margin-bottom: 8px; }
+        .bal-card { background: #13131F; border-radius: 11px; padding: 11px 9px; text-align: center; border: 1px solid #ffffff08; }
+        .bal-label { font-size: 10px; color: #555; margin-bottom: 2px; }
+        .bal-val { font-size: 16px; font-weight: 800; }
+        .total-card { background: #13131F; border: 1px solid #FFD70025; border-radius: 13px; padding: 10px; margin-bottom: 10px; text-align: center; }
+        .scard { background: #13131F; border-radius: 13px; padding: 13px; margin-bottom: 9px; }
+        .scard-title { font-size: 11px; font-weight: 700; color: #888; margin-bottom: 9px; }
+        .cat-row { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+        .cat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .cat-name { flex: 1; font-size: 11px; color: #bbb; }
+        .cat-val { font-size: 12px; font-weight: 700; }
+        .cat-bar-bg { width: 50px; height: 4px; background: #0A0A14; border-radius: 3px; overflow: hidden; }
+        .cat-bar { height: 100%; border-radius: 3px; }
+        .txn-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #ffffff05; }
+        .tr-card { background: #0E1F0E; border: 1px solid #55EFC425; border-radius: 13px; padding: 13px; margin-bottom: 9px; }
+        .tr-title { font-size: 11px; font-weight: 700; color: #55EFC4; margin-bottom: 9px; }
+        .tr-row { display: flex; gap: 7px; align-items: center; margin-bottom: 8px; }
+        .tr-sel, .tr-inp { flex: 1; padding: 8px 10px; border-radius: 9px; border: 1px solid #ffffff15; background: #0A0A14; color: #E8E8F0; font-size: 12px; font-family: 'Heebo', sans-serif; outline: none; }
+        .tr-btn { padding: 9px 16px; border-radius: 9px; border: none; background: linear-gradient(135deg, #55EFC4, #00B894); color: #000; font-weight: 800; font-size: 12px; cursor: pointer; font-family: 'Heebo', sans-serif; }
+        .icard { background: #13131F; border-radius: 14px; padding: 16px; margin-bottom: 12px; border: 1px solid #ffffff0a; }
+        .icard-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+        .istep { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
+        .istep-num { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+        .istep-text { font-size: 12px; color: #bbb; line-height: 1.6; }
+        #apisetup { background: #13131F; border-radius: 14px; padding: 16px; margin-bottom: 12px; border: 1px solid #ffffff0a; }
+        #apikey-input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #ffffff15; background: #0A0A14; color: #E8E8F0; font-size: 13px; font-family: 'Heebo', sans-serif; outline: none; margin-bottom: 8px; }
+        #apikey-save { width: 100%; padding: 11px; border-radius: 10px; border: none; background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; font-weight: 800; font-size: 14px; cursor: pointer; font-family: 'Heebo', sans-serif; }
+        @keyframes bounce { 0%, 80%, 100% { transform: translateY(0) } 40% { transform: translateY(-5px) } }
+    </style>
 </head>
 <body>
 
@@ -96,27 +90,22 @@
       <button class="tab active" data-view="chat" onclick="switchView('chat')">💬</button>
       <button class="tab" data-view="summary" onclick="switchView('summary')">📊</button>
       <button class="tab" data-view="install" onclick="switchView('install')">📲</button>
-      <button class="tab" onclick="clearHistory()" title="נקה היסטוריה">🗑️</button>
-      <button class="tab" onclick="syncAll()" title="סנכרן">🔄</button>
-      <a href="dashboard.html" class="tab" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">🖥️</a>
+      <button class="tab" onclick="clearHistory()">🗑️</button>
+      <button class="tab" onclick="syncAll()">🔄</button>
     </div>
   </div>
 </div>
 
-<div id="chat-view" class="view active" style="display:flex;">
+<div id="chat-view" class="view active">
   <div id="messages"></div>
   <div id="quickrow">
-    <button class="quick" onclick="setQuick('אכלתי שוורמה ב-38')">🌯 שוורמה ב-38</button>
-    <button class="quick" onclick="setQuick('נסעתי ברכבת ב-22')">🚂 רכבת ב-22</button>
-    <button class="quick" onclick="setQuick('קניתי חולצת ביתר ב-180')">👕 חולצת ביתר</button>
-    <button class="quick" onclick="setQuick('קיבלתי 400 שקל מזומן')">💵 קיבלתי מזומן</button>
-    <button class="quick" onclick="setQuick('קיבלתי 150 שקל בביט')">🔵 קיבלתי ביט</button>
-    <button class="quick" onclick="setQuick('העברתי 100 שקל ממזומן לביט')">🔄 העברה</button>
-    <button class="quick" onclick="setQuick('כמה הוצאתי החודש?')">📊 כמה הוצאתי?</button>
-    <button class="quick" onclick="setQuick('דני חייב לי 50 שקל')">💳 חייב לי</button>
+    <button class="quick" onclick="setQuick('אכלתי שוורמה ב-38')">🌯 שוורמה</button>
+    <button class="quick" onclick="setQuick('נסעתי ברכבת ב-22')">🚂 רכבת</button>
+    <button class="quick" onclick="setQuick('קיבלתי 400 שקל מזומן')">💵 מזומן</button>
+    <button class="quick" onclick="setQuick('כמה הוצאתי החודש?')">📊 סיכום</button>
   </div>
   <div id="inputrow">
-    <input id="msginput" type="text" placeholder="כתוב כאן בעברית חופשית..." onkeydown="handleKey(event)">
+    <input id="msginput" type="text" placeholder="כתוב כאן..." onkeydown="if(event.key==='Enter')send()">
     <button id="sendbtn" onclick="send()" disabled>➤</button>
   </div>
 </div>
@@ -125,380 +114,264 @@
   <div class="sum-inner" id="summary-content"></div>
 </div>
 
-<div id="install-view" class="view" style="flex-direction:column;">
-  <div style="padding:16px 14px;">
-    <div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:4px;">📲 קיצור דרך לטלפון</div>
-    <div style="font-size:12px;color:#666;margin-bottom:16px;">פתח את הצ׳אט ישר ממסך הבית</div>
+<div id="install-view" class="view">
+  <div style="padding:16px;">
     <div class="icard">
-      <div class="icard-title" style="color:#4ECDC4">🍎 אייפון (Safari בלבד)</div>
-      <div class="istep"><div class="istep-num" style="background:#4ECDC420;color:#4ECDC4">1</div><div class="istep-text">פתח ב-<strong>Safari</strong></div></div>
-      <div class="istep"><div class="istep-num" style="background:#4ECDC420;color:#4ECDC4">2</div><div class="istep-text">לחץ כפתור שיתוף <strong>⬆️</strong></div></div>
-      <div class="istep"><div class="istep-num" style="background:#4ECDC420;color:#4ECDC4">3</div><div class="istep-text">בחר <strong>"הוסף למסך הבית"</strong></div></div>
-    </div>
-    <div class="icard">
-      <div class="icard-title" style="color:#FFD700">🤖 אנדרואיד (Chrome)</div>
-      <div class="istep"><div class="istep-num" style="background:#FFD70020;color:#FFD700">1</div><div class="istep-text">פתח ב-<strong>Chrome</strong></div></div>
-      <div class="istep"><div class="istep-num" style="background:#FFD70020;color:#FFD700">2</div><div class="istep-text">לחץ שלוש נקודות <strong>⋮</strong></div></div>
-      <div class="istep"><div class="istep-num" style="background:#FFD70020;color:#FFD700">3</div><div class="istep-text">בחר <strong>"הוסף למסך הבית"</strong></div></div>
-    </div>
-    <div id="apisetup">
-      <div class="icard-title" style="color:#FFD700;margin-bottom:10px;">🔑 מפתח Gemini AI</div>
-      <p style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.6;">מפתח חינמי מ-<strong>aistudio.google.com</strong> ← Get API Key ← Create</p>
-      <input id="apikey-input" type="password" placeholder="AIza...">
+      <div class="icard-title" style="color:#FFD700">🔑 הגדרת API</div>
+      <p style="font-size:11px; color:#888; margin-bottom:10px;">תומך ב-Gemini או ב-Groq (מומלץ!)</p>
+      <input id="apikey-input" type="password" placeholder="הדבק מפתח כאן...">
       <button id="apikey-save" onclick="saveApiKey()">שמור מפתח ✓</button>
-      <div id="apikey-status"></div>
+      <div id="apikey-status" style="font-size:11px; margin-top:5px; text-align:center;"></div>
     </div>
   </div>
 </div>
 
 <script>
-const LS={wallet:"bgt_wallet",txns:"bgt_txns",income:"bgt_income",apikey:"bgt_apikey",transfers:"bgt_transfers",chatHistory:"bgt_chat_history",debts:"bgt_debts"};
-const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}};
-const SYNC_URL="https://script.google.com/macros/s/AKfycbxsVKlcH7iGj4gXmpc6o-bAt_zLZ-WOO_AGx-im0CBCcU_nkZ-HEAcMyvzt8YC793ck/exec";
-let _sTimer=null,_sQ={};
-function syncPush(key,value){_sQ[key]=value;clearTimeout(_sTimer);_sTimer=setTimeout(async()=>{for(const[k,v]of Object.entries(_sQ)){try{await fetch(SYNC_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:k,value:JSON.stringify(v)})});}catch{}delete _sQ[k];}},2500);}
-async function syncPull(key){try{const r=await fetch(SYNC_URL+"?key="+key);const d=await r.json();return d.value?JSON.parse(d.value):null;}catch{return null;}}
-async function syncAll(){
-  try{
-    document.getElementById("synctext").textContent="מסנכרן...";
-    document.getElementById("syncdot").style.background="#FFD700";
-    const remote=await(await fetch(SYNC_URL)).json();
-    if(!remote.ok)throw new Error();
-    const rd=remote.data||{};
-    // Pull remote if newer
-    if(rd["bgt_txns"]){const v=JSON.parse(rd["bgt_txns"]);txns=v;lsSet(LS.txns,v);}
-    if(rd["bgt_income"]){const v=JSON.parse(rd["bgt_income"]);income=v;lsSet(LS.income,v);}
-    if(rd["bgt_wallet"]){const v=JSON.parse(rd["bgt_wallet"]);wallet=v;lsSet(LS.wallet,v);}
-    if(rd["bgt_transfers"]){const v=JSON.parse(rd["bgt_transfers"]);transfers=v;lsSet(LS.transfers,v);}
-    if(rd["bgt_chat_history"]){
-      const v=JSON.parse(rd["bgt_chat_history"]);
-      lsSet(LS.chatHistory,v);
+// --- הגדרות ומשתנים ---
+const LS = { wallet: "bgt_wallet", txns: "bgt_txns", income: "bgt_income", apikey: "bgt_apikey", transfers: "bgt_transfers", chatHistory: "bgt_chat_history", debts: "bgt_debts" };
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); if(k !== LS.chatHistory) syncPush(k,v); } catch {} };
+
+const SYNC_URL = "https://script.google.com/macros/s/AKfycbxsVKlcH7iGj4gXmpc6o-bAt_zLZ-WOO_AGx-im0CBCcU_nkZ-HEAcMyvzt8YC793ck/exec";
+const COLORS = { food: "#FF6B6B", transport: "#4ECDC4", hobbies: "#A29BFE", social: "#FD79A8", beitar: "#FFD700", savings: "#55EFC4", other: "#636e72" };
+const CAT_LABELS = { food: "🍔 אוכל", transport: "🚂 תחבורה", hobbies: "🎮 תחביבים", social: "👥 חברה", beitar: "⚽ ביתר", savings: "💰 חיסכון", other: "📦 אחר" };
+const TYPE_ICON = { cash: "💵", credit: "💳", bit: "🔵" };
+const W_NAMES = { cash: "מזומן", bank: "בנק", bit: "ביט" };
+
+let wallet = lsGet(LS.wallet, { cash: 1300, bank: 1620, bit: 0 });
+let txns = lsGet(LS.txns, {});
+let income = lsGet(LS.income, []);
+let transfers = lsGet(LS.transfers, []);
+let debts = lsGet(LS.debts, []);
+let apiKey = lsGet(LS.apikey, null);
+let loading = false;
+window._pendingTxn = null;
+
+// --- פונקציות עזר ---
+function nowMonth() { const d = new Date(); return `${["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"][d.getMonth()]} ${d.getFullYear()}`; }
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+function nowTime() { return new Date().toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" }); }
+function scrollBottom() { const m = document.getElementById("messages"); m.scrollTop = m.scrollHeight; }
+function categorize(d) {
+    d = d.toLowerCase();
+    if (/שוורמה|פלאפל|אוכל|פיצה/.test(d)) return "food";
+    if (/רכבת|אוטובוס|מונית/.test(d)) return "transport";
+    if (/ביתר|משחק/.test(d)) return "beitar";
+    return "other";
+}
+
+function getBalances() {
+    const cur = txns[nowMonth()] || [];
+    const sum = (arr, filter) => arr.filter(filter).reduce((s, x) => s + x.amount, 0);
+    
+    let ca = 0, ba = 0, bta = 0;
+    transfers.forEach(tr => {
+        if(tr.from === "cash") ca -= tr.amount; if(tr.to === "cash") ca += tr.amount;
+        if(tr.from === "bank") ba -= tr.amount; if(tr.to === "bank") ba += tr.amount;
+        if(tr.from === "bit") bta -= tr.amount; if(tr.to === "bit") bta += tr.amount;
+    });
+
+    return {
+        cash: wallet.cash + sum(income, i => i.type === "cash") - sum(cur, t => t.type === "cash") + ca,
+        bank: wallet.bank + sum(income, i => i.type === "bank") - sum(cur, t => t.type === "credit") + ba,
+        bit: wallet.bit + sum(income, i => i.type === "bit") - sum(cur, t => t.type === "bit") + bta,
+        totalSpent: sum(cur, t => t.category !== "savings"),
+        currentTxns: cur
+    };
+}
+
+// --- ממשק משתמש ---
+function addUserMsg(text) {
+    const m = document.getElementById("messages");
+    const w = document.createElement("div"); w.className = "bubble-wrap user";
+    w.innerHTML = `<button class="del-msg" onclick="this.parentElement.remove();saveChatHistory()">✕</button><div class="bubble user">${text}</div><div class="btime">${nowTime()}</div>`;
+    m.appendChild(w); scrollBottom();
+}
+
+function addBotMsg(text, chip = null) {
+    const m = document.getElementById("messages");
+    const w = document.createElement("div"); w.className = "bubble-wrap bot";
+    let chipHtml = "";
+    if (chip) {
+        const icon = chip.isTransfer ? "🔄" : (chip.income ? "📥 +" : "📤 −");
+        const col = chip.income || chip.isTransfer ? "#55EFC4" : "#FF6B6B";
+        chipHtml = `<div class="txn-chip"><span style="color:${col}">${icon}${chip.amount}₪</span><span style="color:#888">${chip.desc}</span></div>`;
     }
-    document.getElementById("synctext").textContent="מסונכרן ✓";
-    document.getElementById("syncdot").style.background="#55EFC4";
-    setTimeout(()=>{document.getElementById("synctext").textContent="מוכן";},2000);
-  }catch{
-    document.getElementById("synctext").textContent="אין חיבור";
-    document.getElementById("syncdot").style.background="#FF6B6B";
-  }
-}
-const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));syncPush(k,v);}catch{}};
-
-// ── יתרות התחלתיות (מרץ 2025) ──
-const DEFAULT_WALLET={cash:1300,bank:1620,bit:0};
-
-let wallet=lsGet(LS.wallet,DEFAULT_WALLET);
-let debts=lsGet(LS.debts||'bgt_debts',[]);
-let txns=lsGet(LS.txns,{});
-let income=lsGet(LS.income,[]);
-let transfers=lsGet(LS.transfers,[]);
-let apiKey=lsGet(LS.apikey,null)||localStorage.getItem(LS.apikey);
-let loading=false;
-window._pendingTxn=null;
-let chatHistory=lsGet(LS.chatHistory,[]);
-function saveChatHistory(){try{const msgs=[];document.querySelectorAll('.bubble-wrap').forEach((w,i)=>{const isUser=w.classList.contains('user');const text=w.querySelector('.bubble')?.childNodes[0]?.textContent||'';const chip=w.querySelector('.txn-chip')?.innerHTML||null;msgs.push({i,user:isUser,text,chip,id:Date.now()+i});});const hist=msgs.slice(-60);localStorage.setItem(LS.chatHistory,JSON.stringify(hist));syncPush(LS.chatHistory,hist);}catch(e){}}
-function restoreChatHistory(){const saved=lsGet(LS.chatHistory,[]);saved.forEach(m=>{if(m.user)addUserMsg(m.text);else{const w=document.createElement('div');w.className='bubble-wrap bot';const b=document.createElement('div');b.className='bubble bot';b.textContent=m.text;if(m.chip){const ch=document.createElement('div');ch.className='txn-chip';ch.innerHTML=m.chip;b.appendChild(ch);}const t=document.createElement('div');t.className='btime';t.textContent='';w.appendChild(b);w.appendChild(t);document.getElementById('messages').appendChild(w);}});scrollBottom();}
-
-const COLORS={food:"#FF6B6B",transport:"#4ECDC4",hobbies:"#A29BFE",social:"#FD79A8",beitar:"#FFD700",savings:"#55EFC4",other:"#636e72"};
-const CAT_LABELS={food:"🍔 אוכל",transport:"🚂 תחבורה",hobbies:"🎮 תחביבים",social:"👥 חברה",beitar:"⚽ ביתר",savings:"💰 חיסכון",other:"📦 אחר"};
-const TYPE_ICON={cash:"💵",credit:"💳",bit:"🔵"};
-const W_NAMES={cash:"מזומן",bank:"בנק",bit:"ביט"};
-
-function nowMonth(){const d=new Date();return`${["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"][d.getMonth()]} ${d.getFullYear()}`;}
-function monthKey(s){const d=new Date(s);return`${["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"][d.getMonth()]} ${d.getFullYear()}`;}
-function todayStr(){return new Date().toISOString().slice(0,10);}
-function nowTime(){return new Date().toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});}
-function scrollBottom(){const m=document.getElementById("messages");m.scrollTop=m.scrollHeight;}
-
-function categorize(desc){
-  const d=(desc||"").toLowerCase();
-  if(/שוורמה|פלאפל|אוכל|מסעדה|קפה|סושי|פיצה|מאפה|עוגה|סנדוויץ|ארוחה|טעמי|מים/.test(d))return"food";
-  if(/רכבת|אוטובוס|מונית|אוברה|גט|טקסי|דלק|נסיעה/.test(d))return"transport";
-  if(/ביתר|ירושלים|כרטיס|משחק|אצטדיון/.test(d))return"beitar";
-  if(/חבר|חברה|בילוי|מסיבה|קולנוע|סרט/.test(d))return"social";
-  if(/ספר|משחק|אוזניות|גיימינג|יוטיוב|נטפליקס/.test(d))return"hobbies";
-  if(/חיסכון|שמירה|קופה/.test(d))return"savings";
-  return"other";
+    w.innerHTML = `<button class="del-msg" onclick="this.parentElement.remove();saveChatHistory()">✕</button><div class="bubble bot">${text}${chipHtml}</div><div class="btime">${nowTime()}</div>`;
+    m.appendChild(w); scrollBottom();
 }
 
-function getBalances(){
-  const cur=txns[nowMonth()]||[];
-  const ci=income.filter(i=>i.type==="cash").reduce((s,i)=>s+i.amount,0);
-  const bi=income.filter(i=>i.type==="bank").reduce((s,i)=>s+i.amount,0);
-  const bti=income.filter(i=>i.type==="bit").reduce((s,i)=>s+i.amount,0);
-  const cs=cur.filter(t=>t.type==="cash"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
-  const bs=cur.filter(t=>t.type==="credit"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
-  const bts=cur.filter(t=>t.type==="bit"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
-  let ca=0,ba=0,bta=0;
-  for(const tr of transfers){
-    if(tr.from==="cash")ca-=tr.amount;if(tr.to==="cash")ca+=tr.amount;
-    if(tr.from==="bank")ba-=tr.amount;if(tr.to==="bank")ba+=tr.amount;
-    if(tr.from==="bit")bta-=tr.amount;if(tr.to==="bit")bta+=tr.amount;
-  }
-  return{
-    cash:wallet.cash+ci-cs+ca,
-    bank:wallet.bank+bi-bs+ba,
-    bit:(wallet.bit||0)+bti-bts+bta,
-    totalSpent:cur.filter(t=>t.category!=="savings").reduce((s,t)=>s+t.amount,0),
-    currentTxns:cur
-  };
+function showTyping() {
+    const m = document.getElementById("messages");
+    const w = document.createElement("div"); w.id = "typing-msg"; w.className = "bubble-wrap bot";
+    w.innerHTML = `<div class="bubble bot typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+    m.appendChild(w); scrollBottom(); return w;
 }
 
-function addUserMsg(text){
-  const w=document.createElement("div");w.className="bubble-wrap user";
-  const b=document.createElement("div");b.className="bubble user";b.textContent=text;
-  const del=document.createElement("button");del.className="del-msg";del.textContent="✕";del.onclick=function(){deleteMsg(this);};
-  const t=document.createElement("div");t.className="btime";t.textContent=nowTime();
-  w.appendChild(del);w.appendChild(b);w.appendChild(t);document.getElementById("messages").appendChild(w);scrollBottom();
-}
+// --- לוגיקה מרכזית (API & Actions) ---
+async function send() {
+    const inp = document.getElementById("msginput");
+    const text = inp.value.trim();
+    if (!text || loading) return;
 
-function deleteMsg(btn){const wrap=btn.closest('.bubble-wrap');if(wrap)wrap.remove();saveChatHistory();}
-function addUserMsg_orig(text){
-  const w=document.createElement("div");w.className="bubble-wrap user";
-  const b=document.createElement("div");b.className="bubble user";b.textContent=text;
-  const del=document.createElement("button");del.className="del-msg";del.textContent="✕";del.onclick=function(){deleteMsg(this);};
-  const t=document.createElement("div");t.className="btime";t.textContent=nowTime();
-  w.appendChild(del);w.appendChild(b);w.appendChild(t);document.getElementById("messages").appendChild(w);scrollBottom();
-}
-function addBotMsg(text,chip=null){
-  const w=document.createElement("div");w.className="bubble-wrap bot";
-  const b=document.createElement("div");b.className="bubble bot";b.textContent=text;
-  if(chip){
-    const c=document.createElement("div");c.className="txn-chip";
-    const icon=chip.isTransfer?"🔄":(chip.income?"📥 +":"📤 −");
-    const col=chip.isTransfer?"#55EFC4":(chip.income?"#55EFC4":"#FF6B6B");
-    c.innerHTML=`<span style="color:${col}">${icon}${chip.amount}₪</span><span style="color:#888">${chip.desc}</span><span style="color:#555">${TYPE_ICON[chip.type]||""}</span>`;
-    b.appendChild(c);
-  }
-  const t=document.createElement("div");t.className="btime";t.textContent=nowTime();
-  const del=document.createElement("button");del.className="del-msg";del.textContent="✕";del.onclick=function(){deleteMsg(this);};
-  w.appendChild(del);w.appendChild(b);w.appendChild(t);document.getElementById("messages").appendChild(w);scrollBottom();
-}
+    inp.value = ""; document.getElementById("sendbtn").disabled = true;
+    addUserMsg(text);
 
-function showTyping(){
-  const w=document.createElement("div");w.className="bubble-wrap bot";w.id="typing-wrap";
-  const b=document.createElement("div");b.className="bubble bot typing";
-  b.innerHTML='<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-  w.appendChild(b);document.getElementById("messages").appendChild(w);scrollBottom();return w;
-}
+    if (!apiKey) { addBotMsg("⚠️ חסר מפתח API. הגדר בלשונית 📲"); return; }
 
-function clearHistory(){
-  if(!confirm("למחוק את כל היסטוריית הצ'אט?"))return;
-  localStorage.removeItem(LS.chatHistory);
-  document.getElementById('messages').innerHTML='';
-  const{cash,bank,bit}=getBalances();
-  addBotMsg("היסטוריה נמחקה ✓\n\n💵 "+cash+"₪ · 🏦 "+bank+"₪ · 🔵 "+bit+"₪");
-}
-function handleKey(e){if(e.key==="Enter")send();}
-function setQuick(q){document.getElementById("msginput").value=q;document.getElementById("sendbtn").disabled=false;document.getElementById("msginput").focus();}
+    loading = true;
+    const te = showTyping();
+    const bal = getBalances();
+    const pending = window._pendingTxn ? JSON.stringify(window._pendingTxn) : "none";
 
-async function send(){
-  const inp=document.getElementById("msginput");
-  const text=inp.value.trim();
-  if(!text||text.length<2||loading)return;
-  inp.value="";document.getElementById("sendbtn").disabled=true;
-  addUserMsg(text);
-  if(!apiKey){addBotMsg("⚠️ אין מפתח Gemini. עבור ללשונית 📲 והגדר מפתח חינמי.");return;}
-  loading=true;
-  const te=showTyping();
-  const{cash:cashBal,bank:bankBal,bit:bitBal,totalSpent,currentTxns}=getBalances();
-  const pending=window._pendingTxn?JSON.stringify(window._pendingTxn):"אין";
+    const sys = `Budget bot. Hebrew ONLY. JSON output. 
+    Status: cash=${bal.cash} bank=${bal.bank} bit=${bal.bit} spent=${bal.totalSpent} | Pending: ${pending}
+    Actions: add_expense, add_income, transfer, add_debt, pay_debt, ask_type, none
+    JSON: {"reply":"", "action":"", "transaction":{"desc":"", "amount":0, "category":"", "type":"cash|credit|bit", "is_income":false}, "transfer":{"from":"","to":"","amount":0}, "debt":{"person":"", "amount":0}}`;
 
-  const totalDebt=debts.filter(d=>!d.paid).reduce((s,d)=>s+d.amount,0);
-  // סיכום קטגוריות במקום רשימת עסקאות - חיסכון 80% טוקנים
-  const cats=currentTxns.reduce((r,t)=>{r[t.category]=(r[t.category]||0)+t.amount;return r;},{});
-  const catStr=Object.entries(cats).map(([k,v])=>k+":"+v).join(" ")||"none";
-  const sys="Budget bot. Hebrew ONLY. Max 10 words. Emojis. Transaction confirmed->say: \u05e8\u05e9\u05de\u05ea\u05d9 \ud83d\udc4d + summary.\nS:cash="+cashBal+" bank="+bankBal+" bit="+bitBal+" debt="+totalDebt+" spent="+totalSpent+"\nC:"+catStr+"\nP:"+pending+"\nR:no_type->ask_type|expense->add_expense|income->add_income|transfer->transfer|owes->add_debt|paid->pay_debt\nT:cash|credit|bit K:food|transport|hobbies|social|beitar|savings|other\nJSON:{reply:\'\',action:\'\',transaction:{desc:\'\',amount:0,category:\'\',type:\'\',date:\'YYYY-MM-DD\',is_income:false},transfer:{from:\'\',to:\'\',amount:0},debt:{person:\'\',amount:0,desc:\'\'}}";
+    try {
+        const data = await callAPI(sys + "\nUser: " + text);
+        te.remove();
+        
+        let raw = data.choices ? data.choices[0].message.content : data.candidates[0].content.parts[0].text;
+        let p = JSON.parse(raw.replace(/```json|```/g, "").trim());
 
-  // retry אוטומטי עד 2 פעמים
-  async function callAPI(prompt,tries){
-    for(let i=0;i<=tries;i++){
-      const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key="+apiKey,{
-        method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:300,temperature:0.2}})
-      });
-      const d=await r.json();
-      if(!d.error)return d;
-      if(d.error.status==="RESOURCE_EXHAUSTED"&&i<tries){
-        await new Promise(r=>setTimeout(r,3000*(i+1)));
-        continue;
-      }
-      return d;
+        let chip = null;
+
+        // טיפול בטרנזקציה ממתינה (סוג תשלום)
+        if (p.action === "ask_type" && p.transaction) {
+            window._pendingTxn = p.transaction;
+        } else if (window._pendingTxn && !p.transaction?.type) {
+            const l = text.toLowerCase();
+            let type = /מזומן/.test(l) ? "cash" : /אשראי|כרטיס/.test(l) ? "credit" : /ביט/.test(l) ? "bit" : null;
+            if (type) {
+                p.transaction = { ...window._pendingTxn, type };
+                p.action = window._pendingTxn.is_income ? "add_income" : "add_expense";
+                window._pendingTxn = null;
+            }
+        }
+
+        // ביצוע פעולות
+        if (p.action === "add_expense" && p.transaction?.amount) {
+            const t = p.transaction; const m = nowMonth();
+            if(!txns[m]) txns[m] = [];
+            const newT = { id: Date.now(), date: todayStr(), desc: t.desc || text, amount: t.amount, category: t.category || categorize(t.desc || text), type: t.type || "cash" };
+            txns[m].push(newT); lsSet(LS.txns, txns);
+            chip = { ...newT, income: false };
+        } else if (p.action === "transfer" && p.transfer?.amount) {
+            const tr = p.transfer; transfers.push({ id: Date.now(), date: todayStr(), ...tr });
+            lsSet(LS.transfers, transfers);
+            chip = { amount: tr.amount, desc: `העברה`, isTransfer: true };
+        }
+
+        addBotMsg(p.reply || "בוצע ✓", chip);
+        saveChatHistory();
+    } catch (e) {
+        if(te) te.remove();
+        addBotMsg("⚠️ שגיאה בתקשורת. נסה שוב.");
+    } finally {
+        loading = false; document.getElementById("sendbtn").disabled = false;
     }
-  }
-
-  // 2 הודעות אחרונות כהיסטוריה
-  const msgEls=[...document.querySelectorAll(".bubble-wrap")].slice(-4);
-  const hist=msgEls.map(w=>(w.classList.contains("user")?"U:":"A:")+w.querySelector(".bubble")?.childNodes[0]?.textContent?.trim()).filter(Boolean).join("\n");
-  try{
-    const data=await callAPI(sys+(hist?"\nHistory:\n"+hist:"")+"\nU:"+text,2);
-    te.remove();
-    if(!data||data.error){
-      if(data&&data.error.status==="RESOURCE_EXHAUSTED"){
-        addBotMsg("⚠️ Gemini עמוס — ניסיתי 3 פעמים. נסה שוב בעוד רגע.");
-      } else {
-        addBotMsg("שגיאת API: "+(data&&data.error.message||"נסה שוב")+"\n\nוודא שהמפתח תקין בלשונית 📲");
-      }
-      loading=false;return;
-    }
-    const raw=data.candidates?.[0]?.content?.parts?.[0]?.text||"{}";
-    let p;try{p=JSON.parse(raw.replace(/```json|```/g,"").trim());}catch{p={reply:raw,action:"none"};}
-
-    let chip=null;
-
-    if(p.action==="ask_type"&&p.transaction){
-      window._pendingTxn=p.transaction;
-      addBotMsg(p.reply||"באיזו צורה? 💵 מזומן · 💳 אשראי · 🔵 ביט");
-      loading=false;return;
-    }
-
-    if(window._pendingTxn&&(!p.transaction?.type||p.action==="none")){
-      const l=text.toLowerCase();let rt=null;
-      if(/מזומן|cash/.test(l))rt="cash";
-      else if(/אשראי|כרטיס|credit/.test(l))rt="credit";
-      else if(/ביט|bit/.test(l))rt="bit";
-      if(rt){p.transaction={...window._pendingTxn,type:rt};p.action=window._pendingTxn.is_income?"add_income":"add_expense";p.reply=p.reply||"מעולה! רשמתי ✓";window._pendingTxn=null;}
-    }
-
-    if(p.action==="transfer"&&p.transfer?.amount){
-      const tr=p.transfer;
-      transfers.push({id:Date.now(),date:todayStr(),...tr});
-      lsSet(LS.transfers,transfers);
-      chip={amount:tr.amount,desc:`${W_NAMES[tr.from]} → ${W_NAMES[tr.to]}`,type:tr.to,isTransfer:true};
-      window._pendingTxn=null;
-    }
-
-    if(p.action==="add_debt"&&p.debt?.amount){
-      const d={id:Date.now(),date:todayStr(),person:p.debt.person||"לא ידוע",amount:p.debt.amount,desc:p.debt.desc||"",paid:false};
-      debts.push(d);lsSet(LS.debts,debts);
-      chip={amount:d.amount,desc:d.person+" חייב לי",type:"cash",income:false};
-      window._pendingTxn=null;
-    }
-    if(p.action==="pay_debt"&&p.debt?.person){
-      debts=debts.map(d=>d.person===p.debt.person?{...d,paid:true}:d);
-      lsSet(LS.debts,debts);
-      window._pendingTxn=null;
-    }
-    if(p.action==="add_expense"&&p.transaction?.amount){
-      const t=p.transaction;const month=monthKey(t.date||todayStr());
-      const newT={id:Date.now(),date:t.date||todayStr(),desc:t.desc||text,amount:t.amount,category:t.category||categorize(t.desc||text),type:t.type||"cash"};
-      if(!txns[month])txns[month]=[];txns[month].push(newT);lsSet(LS.txns,txns);if(navigator.vibrate)navigator.vibrate(50);
-      chip={...newT,income:false};window._pendingTxn=null;
-    }
-
-    if(p.action==="add_income"&&p.transaction?.amount){
-      const t=p.transaction;const tm={cash:"cash",credit:"bank",bit:"bit"};
-      const newI={id:Date.now(),date:t.date||todayStr(),desc:t.desc||text,amount:t.amount,type:tm[t.type]||"cash"};
-      income.push(newI);lsSet(LS.income,income);
-      chip={...newI,category:"savings",income:true};window._pendingTxn=null;
-    }
-
-    addBotMsg(p.reply||"הבנתי! ✓",chip);saveChatHistory();
-  }catch(e){te.remove();addBotMsg("אופס, שגיאת רשת 😅 בדוק חיבור ונסה שוב.");}
-  loading=false;
 }
 
-function saveApiKey(){
-  const val=document.getElementById("apikey-input").value.trim();
-  if(!val.startsWith("AIza")){document.getElementById("apikey-status").textContent="❌ מפתח לא תקין";return;}
-  apiKey=val;localStorage.setItem(LS.apikey,val);
-  document.getElementById("apikey-status").textContent="✅ נשמר! הבוט פעיל.";
-  addBotMsg("✅ מפתח Gemini נשמר! נסה לכתוב לי משהו 💬");switchView("chat");
+async function callAPI(prompt) {
+    const isGroq = apiKey.startsWith("gsk_");
+    const url = isGroq ? "https://api.groq.com/openai/v1/chat/completions" : "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey;
+    
+    const body = isGroq ? {
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" }
+    } : {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: "application/json" }
+    };
+
+    const r = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(isGroq ? { "Authorization": `Bearer ${apiKey}` } : {}) },
+        body: JSON.stringify(body)
+    });
+    return r.json();
 }
 
-function doTransfer(){
-  const from=document.getElementById("tr-from").value;
-  const to=document.getElementById("tr-to").value;
-  const amount=parseFloat(document.getElementById("tr-amount").value);
-  if(!amount||amount<=0||from===to){alert("בדוק פרטים");return;}
-  transfers.push({id:Date.now(),date:todayStr(),from,to,amount});
-  lsSet(LS.transfers,transfers);
-  document.getElementById("tr-amount").value="";
-  renderSummary();
-  addBotMsg(`✅ העברתי ${amount}₪ מ${W_NAMES[from]} ל${W_NAMES[to]}`);
-  switchView("chat");
+// --- ניהול נתונים ---
+function saveApiKey() {
+    const val = document.getElementById("apikey-input").value.trim();
+    if (val.length < 10) return;
+    apiKey = val; localStorage.setItem(LS.apikey, JSON.stringify(val));
+    document.getElementById("apikey-status").textContent = "המפתח נשמר ✓";
+    setTimeout(() => switchView("chat"), 1000);
 }
 
-function renderSummary(){
-  const{cash,bank,bit,totalSpent,currentTxns}=getBalances();
-  const total=cash+bank+bit;
-  const byCat={};
-  for(const t of currentTxns)if(t.category!=="savings")byCat[t.category]=(byCat[t.category]||0)+t.amount;
-  const maxCat=Math.max(1,...Object.values(byCat));
-  const recent=[...currentTxns].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8);
+function clearHistory() { if(confirm("למחוק הכל?")) { localStorage.removeItem(LS.chatHistory); document.getElementById("messages").innerHTML = ""; } }
 
-  document.getElementById("summary-content").innerHTML=`
-    <div class="bal-grid">
-      <div class="bal-card" style="border-color:#55EFC430"><div class="bal-label">💵 מזומן</div><div class="bal-val" style="color:#55EFC4">${cash}₪</div></div>
-      <div class="bal-card" style="border-color:#4ECDC430"><div class="bal-label">🏦 בנק</div><div class="bal-val" style="color:#4ECDC4">${bank}₪</div></div>
-      <div class="bal-card" style="border-color:#6C9BFF30"><div class="bal-label">🔵 ביט</div><div class="bal-val" style="color:#6C9BFF">${bit}₪</div></div>
-    </div>
-    <div class="total-card"><div class="bal-label">💰 סה"כ</div><div class="bal-val" style="color:#FFD700;font-size:20px">${total}₪</div></div>
-    <div class="tr-card">
-      <div class="tr-title">🔄 העברה בין ארנקים</div>
-      <div class="tr-row">
-        <select class="tr-sel" id="tr-from"><option value="cash">💵 מזומן</option><option value="bank">🏦 בנק</option><option value="bit">🔵 ביט</option></select>
-        <span style="color:#55EFC4;font-size:14px">←</span>
-        <select class="tr-sel" id="tr-to"><option value="bit">🔵 ביט</option><option value="cash">💵 מזומן</option><option value="bank">🏦 בנק</option></select>
-      </div>
-      <div class="tr-row">
-        <input class="tr-inp" id="tr-amount" type="number" placeholder="סכום ₪">
-        <button class="tr-btn" onclick="doTransfer()">העבר ✓</button>
-      </div>
-    </div>
-    <div class="scard">
-      <div class="scard-title">📅 ${nowMonth()} — ${totalSpent}₪ הוצאות</div>
-      ${Object.keys(byCat).length===0?'<div style="font-size:11px;color:#444;text-align:center;padding:8px">אין הוצאות עדיין</div>':
-        Object.entries(byCat).map(([cat,val])=>`
-          <div class="cat-row">
-            <div class="cat-dot" style="background:${COLORS[cat]}"></div>
-            <div class="cat-name">${CAT_LABELS[cat]||cat}</div>
-            <div class="cat-val" style="color:${COLORS[cat]}">${val}₪</div>
-            <div class="cat-bar-bg"><div class="cat-bar" style="width:${Math.min(100,(val/maxCat)*100)}%;background:${COLORS[cat]}"></div></div>
-          </div>`).join("")}
-    </div>
-    ${debts.filter(d=>!d.paid).length>0?`
-    <div class="scard" style="border:1px solid #6C9BFF25;">
-      <div class="scard-title" style="color:#6C9BFF;">💳 חייבים לי</div>
-      ${debts.filter(d=>!d.paid).map(d=>`
-        <div class="txn-row">
-          <div><div style="font-size:11px;color:#ddd">${d.person}</div><div style="font-size:9px;color:#444">${d.desc||""} · ${d.date}</div></div>
-          <div style="font-size:12px;font-weight:700;color:#6C9BFF">+${d.amount}₪</div>
-        </div>`).join("")}
-    </div>`:""}
-    <div class="scard">
-      <div class="scard-title">🕐 עסקאות אחרונות</div>
-      ${recent.length===0?'<div style="font-size:11px;color:#444;text-align:center;padding:8px">אין עסקאות עדיין</div>':
-        recent.map(t=>`
-          <div class="txn-row">
-            <div style="display:flex;gap:7px;align-items:center">
-              <div style="width:6px;height:6px;border-radius:50%;background:${COLORS[t.category]||'#ddd'};flex-shrink:0"></div>
-              <div><div style="font-size:11px;color:#ddd">${t.desc}</div><div style="font-size:9px;color:#444">${t.date} · ${TYPE_ICON[t.type]||"💳"}</div></div>
-            </div>
-            <div style="font-size:12px;font-weight:700;color:${t.category==="beitar"?"#FFD700":"#FF6B6B"}">−${t.amount}₪</div>
-          </div>`).join("")}
-    </div>`;
+function saveChatHistory() {
+    const msgs = Array.from(document.querySelectorAll(".bubble-wrap")).map(w => ({
+        user: w.classList.contains("user"),
+        text: w.querySelector(".bubble").childNodes[0].textContent,
+        chip: w.querySelector(".txn-chip")?.innerHTML || null
+    })).slice(-30);
+    localStorage.setItem(LS.chatHistory, JSON.stringify(msgs));
 }
 
-function switchView(v){
-  document.querySelectorAll(".view").forEach(el=>{el.classList.remove("active");el.style.display="none";});
-  document.querySelectorAll(".tab[data-view]").forEach(el=>el.classList.remove("active"));
-  const map={chat:"chat-view",summary:"summary-view",install:"install-view"};
-  document.getElementById(map[v]).classList.add("active");
-  document.getElementById(map[v]).style.display="flex";
-  document.querySelector(`.tab[data-view="${v}"]`)?.classList.add("active");
-  if(v==="summary")renderSummary();
+function restoreChatHistory() {
+    const saved = lsGet(LS.chatHistory, []);
+    saved.forEach(m => m.user ? addUserMsg(m.text) : addBotMsg(m.text, m.chip ? { amount: "", desc: "", html: m.chip } : null));
 }
 
-document.addEventListener("DOMContentLoaded",()=>{
-  if(apiKey)document.getElementById('apikey-input').value=apiKey;
-  restoreChatHistory();
-  syncAll(); // סנכרון אחד בטעינה בלבד
-  const{cash,bank,bit}=getBalances();
-  addBotMsg(`היי! 👋 אני הבוט של התקציב שלך.\n\n💵 מזומן: ${cash}₪  🏦 בנק: ${bank}₪  🔵 ביט: ${bit}₪\n\nמה אני יכול לעשות:\n• לרשום הוצאה / הכנסה\n• לרשום העברה בין ארנקים\n• לנהל חובות (מי חייב לי)\n• לענות על שאלות תקציב`+(apiKey?"\n\n✅ Gemini מוכן!":"\n\n⚙️ כנס ל-📲 להגדיר מפתח Gemini"));
-  document.getElementById("msginput").addEventListener("input",(e)=>{
-    document.getElementById("sendbtn").disabled=!e.target.value.trim();
-  });
+function switchView(v) {
+    document.querySelectorAll(".view").forEach(el => el.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(el => el.classList.remove("active"));
+    document.getElementById(v + "-view").classList.add("active");
+    document.querySelector(`[data-view="${v}"]`).classList.add("active");
+    if(v === "summary") renderSummary();
+}
+
+function renderSummary() {
+    const bal = getBalances();
+    const cats = bal.currentTxns.reduce((r, t) => { r[t.category] = (r[t.category] || 0) + t.amount; return r; }, {});
+    
+    document.getElementById("summary-content").innerHTML = `
+        <div class="bal-grid">
+            <div class="bal-card"><div class="bal-label">מזומן</div><div class="bal-val">${bal.cash}₪</div></div>
+            <div class="bal-card"><div class="bal-label">בנק</div><div class="bal-val">${bal.bank}₪</div></div>
+            <div class="bal-card"><div class="bal-label">ביט</div><div class="bal-val">${bal.bit}₪</div></div>
+        </div>
+        <div class="scard">
+            <div class="scard-title">הוצאות לפי קטגוריה</div>
+            ${Object.entries(cats).map(([c, v]) => `
+                <div class="cat-row">
+                    <div class="cat-dot" style="background:${COLORS[c]}"></div>
+                    <div class="cat-name">${CAT_LABELS[c] || c}</div>
+                    <div class="cat-val">${v}₪</div>
+                </div>
+            `).join("")}
+        </div>
+    `;
+}
+
+// --- סנכרון (Placeholder) ---
+function syncPush(k, v) { 
+    fetch(SYNC_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ key: k, value: JSON.stringify(v) }) }).catch(() => {});
+}
+async function syncAll() {
+    document.getElementById("synctext").textContent = "מסנכרן...";
+    try {
+        const r = await fetch(SYNC_URL);
+        const d = await r.json();
+        if(d.data) {
+            Object.keys(d.data).forEach(k => localStorage.setItem(k, d.data[k]));
+            location.reload();
+        }
+    } catch(e) { document.getElementById("synctext").textContent = "מוכן"; }
+}
+
+function setQuick(t) { document.getElementById("msginput").value = t; document.getElementById("sendbtn").disabled = false; }
+
+document.addEventListener("DOMContentLoaded", () => {
+    restoreChatHistory();
+    document.getElementById("msginput").addEventListener("input", (e) => document.getElementById("sendbtn").disabled = !e.target.value.trim());
 });
 </script>
 </body>
