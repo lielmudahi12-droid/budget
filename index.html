@@ -20,9 +20,13 @@
         #syncstatus { font-size: 9px; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
         #syncdot { width: 5px; height: 5px; border-radius: 50%; background: #55EFC4; flex-shrink: 0; }
         #synctext { color: #55EFC4; }
-        #tabs { display: flex; gap: 5px; margin-right: auto; }
+        #tabs { display: flex; gap: 5px; margin-right: auto; align-items: center; }
         .tab { padding: 5px 9px; border-radius: 11px; border: 1px solid #ffffff15; background: transparent; color: #555; cursor: pointer; font-size: 12px; font-family: 'Heebo', sans-serif; transition: .2s; }
         .tab.active { border-color: #FFD700; background: #FFD70018; color: #FFD700; }
+        
+        /* כפתור דשבורד חדש */
+        .dash-btn { padding: 5px 10px; border-radius: 11px; background: #FFD700; color: #000; text-decoration: none; font-size: 11px; font-weight: 800; margin-left: 5px; }
+
         .view { display: none; flex: 1; flex-direction: column; overflow: hidden; }
         .view.active { display: flex; }
         #messages { flex: 1; overflow-y: auto; padding: 10px 11px 0; display: flex; flex-direction: column; gap: 7px; }
@@ -51,29 +55,14 @@
         .bal-card { background: #13131F; border-radius: 11px; padding: 11px 9px; text-align: center; border: 1px solid #ffffff08; }
         .bal-label { font-size: 10px; color: #555; margin-bottom: 2px; }
         .bal-val { font-size: 16px; font-weight: 800; }
-        .total-card { background: #13131F; border: 1px solid #FFD70025; border-radius: 13px; padding: 10px; margin-bottom: 10px; text-align: center; }
         .scard { background: #13131F; border-radius: 13px; padding: 13px; margin-bottom: 9px; }
         .scard-title { font-size: 11px; font-weight: 700; color: #888; margin-bottom: 9px; }
         .cat-row { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
         .cat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
         .cat-name { flex: 1; font-size: 11px; color: #bbb; }
         .cat-val { font-size: 12px; font-weight: 700; }
-        .cat-bar-bg { width: 50px; height: 4px; background: #0A0A14; border-radius: 3px; overflow: hidden; }
-        .cat-bar { height: 100%; border-radius: 3px; }
-        .txn-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #ffffff05; }
-        .tr-card { background: #0E1F0E; border: 1px solid #55EFC425; border-radius: 13px; padding: 13px; margin-bottom: 9px; }
-        .tr-title { font-size: 11px; font-weight: 700; color: #55EFC4; margin-bottom: 9px; }
-        .tr-row { display: flex; gap: 7px; align-items: center; margin-bottom: 8px; }
-        .tr-sel, .tr-inp { flex: 1; padding: 8px 10px; border-radius: 9px; border: 1px solid #ffffff15; background: #0A0A14; color: #E8E8F0; font-size: 12px; font-family: 'Heebo', sans-serif; outline: none; }
-        .tr-btn { padding: 9px 16px; border-radius: 9px; border: none; background: linear-gradient(135deg, #55EFC4, #00B894); color: #000; font-weight: 800; font-size: 12px; cursor: pointer; font-family: 'Heebo', sans-serif; }
         .icard { background: #13131F; border-radius: 14px; padding: 16px; margin-bottom: 12px; border: 1px solid #ffffff0a; }
         .icard-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
-        .istep { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
-        .istep-num { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
-        .istep-text { font-size: 12px; color: #bbb; line-height: 1.6; }
-        #apisetup { background: #13131F; border-radius: 14px; padding: 16px; margin-bottom: 12px; border: 1px solid #ffffff0a; }
-        #apikey-input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #ffffff15; background: #0A0A14; color: #E8E8F0; font-size: 13px; font-family: 'Heebo', sans-serif; outline: none; margin-bottom: 8px; }
-        #apikey-save { width: 100%; padding: 11px; border-radius: 10px; border: none; background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; font-weight: 800; font-size: 14px; cursor: pointer; font-family: 'Heebo', sans-serif; }
         @keyframes bounce { 0%, 80%, 100% { transform: translateY(0) } 40% { transform: translateY(-5px) } }
     </style>
 </head>
@@ -87,6 +76,7 @@
       <div id="syncstatus"><div id="syncdot"></div><span id="synctext">מוכן</span></div>
     </div>
     <div id="tabs">
+      <a href="index.html" class="dash-btn">📊 דשבורד</a>
       <button class="tab active" data-view="chat" onclick="switchView('chat')">💬</button>
       <button class="tab" data-view="summary" onclick="switchView('summary')">📊</button>
       <button class="tab" data-view="install" onclick="switchView('install')">📲</button>
@@ -118,16 +108,15 @@
   <div style="padding:16px;">
     <div class="icard">
       <div class="icard-title" style="color:#FFD700">🔑 הגדרת API</div>
-      <p style="font-size:11px; color:#888; margin-bottom:10px;">תומך ב-Gemini או ב-Groq (מומלץ!)</p>
-      <input id="apikey-input" type="password" placeholder="הדבק מפתח כאן...">
-      <button id="apikey-save" onclick="saveApiKey()">שמור מפתח ✓</button>
+      <p style="font-size:11px; color:#888; margin-bottom:10px;">תומך ב-Gemini או ב-Groq</p>
+      <input id="apikey-input" type="password" placeholder="הדבק מפתח כאן..." style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ffffff15; background: #0A0A14; color: #fff; margin-bottom: 8px;">
+      <button onclick="saveApiKey()" style="width: 100%; padding: 11px; border-radius: 10px; border: none; background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; font-weight: 800; cursor: pointer;">שמור מפתח ✓</button>
       <div id="apikey-status" style="font-size:11px; margin-top:5px; text-align:center;"></div>
     </div>
   </div>
 </div>
 
 <script>
-// --- הגדרות ומשתנים ---
 const LS = { wallet: "bgt_wallet", txns: "bgt_txns", income: "bgt_income", apikey: "bgt_apikey", transfers: "bgt_transfers", chatHistory: "bgt_chat_history", debts: "bgt_debts" };
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); if(k !== LS.chatHistory) syncPush(k,v); } catch {} };
@@ -135,52 +124,38 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); if(k
 const SYNC_URL = "https://script.google.com/macros/s/AKfycbxsVKlcH7iGj4gXmpc6o-bAt_zLZ-WOO_AGx-im0CBCcU_nkZ-HEAcMyvzt8YC793ck/exec";
 const COLORS = { food: "#FF6B6B", transport: "#4ECDC4", hobbies: "#A29BFE", social: "#FD79A8", beitar: "#FFD700", savings: "#55EFC4", other: "#636e72" };
 const CAT_LABELS = { food: "🍔 אוכל", transport: "🚂 תחבורה", hobbies: "🎮 תחביבים", social: "👥 חברה", beitar: "⚽ ביתר", savings: "💰 חיסכון", other: "📦 אחר" };
-const TYPE_ICON = { cash: "💵", credit: "💳", bit: "🔵" };
-const W_NAMES = { cash: "מזומן", bank: "בנק", bit: "ביט" };
 
-let wallet = lsGet(LS.wallet, { cash: 1300, bank: 1620, bit: 0 });
+let wallet = lsGet(LS.wallet, { cash: 0, bank: 0, bit: 0 });
 let txns = lsGet(LS.txns, {});
 let income = lsGet(LS.income, []);
 let transfers = lsGet(LS.transfers, []);
-let debts = lsGet(LS.debts, []);
 let apiKey = lsGet(LS.apikey, null);
 let loading = false;
-window._pendingTxn = null;
 
-// --- פונקציות עזר ---
 function nowMonth() { const d = new Date(); return `${["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"][d.getMonth()]} ${d.getFullYear()}`; }
-function todayStr() { return new Date().toISOString().slice(0, 10); }
 function nowTime() { return new Date().toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" }); }
 function scrollBottom() { const m = document.getElementById("messages"); m.scrollTop = m.scrollHeight; }
-function categorize(d) {
-    d = d.toLowerCase();
-    if (/שוורמה|פלאפל|אוכל|פיצה/.test(d)) return "food";
-    if (/רכבת|אוטובוס|מונית/.test(d)) return "transport";
-    if (/ביתר|משחק/.test(d)) return "beitar";
-    return "other";
-}
 
 function getBalances() {
     const cur = txns[nowMonth()] || [];
     const sum = (arr, filter) => arr.filter(filter).reduce((s, x) => s + x.amount, 0);
-    
-    let ca = 0, ba = 0, bta = 0;
-    transfers.forEach(tr => {
-        if(tr.from === "cash") ca -= tr.amount; if(tr.to === "cash") ca += tr.amount;
-        if(tr.from === "bank") ba -= tr.amount; if(tr.to === "bank") ba += tr.amount;
-        if(tr.from === "bit") bta -= tr.amount; if(tr.to === "bit") bta += tr.amount;
-    });
-
     return {
-        cash: wallet.cash + sum(income, i => i.type === "cash") - sum(cur, t => t.type === "cash") + ca,
-        bank: wallet.bank + sum(income, i => i.type === "bank") - sum(cur, t => t.type === "credit") + ba,
-        bit: wallet.bit + sum(income, i => i.type === "bit") - sum(cur, t => t.type === "bit") + bta,
-        totalSpent: sum(cur, t => t.category !== "savings"),
-        currentTxns: cur
+        cash: wallet.cash - sum(cur, t => t.type === "cash"),
+        bank: wallet.bank - sum(cur, t => t.type === "credit"),
+        bit: wallet.bit - sum(cur, t => t.type === "bit"),
+        totalSpent: sum(cur, t => t.category !== "savings")
     };
 }
 
-// --- ממשק משתמש ---
+// הודעת פתיחה אוטומטית
+function sendWelcomeMessage() {
+    const bal = getBalances();
+    const msg = `צהוב עולה! ⚽ 
+יתרה בבנק: ${bal.bank}₪ | מזומן: ${bal.cash}₪ | ביט: ${bal.bit}₪.
+מה נרשום היום?`;
+    addBotMsg(msg);
+}
+
 function addUserMsg(text) {
     const m = document.getElementById("messages");
     const w = document.createElement("div"); w.className = "bubble-wrap user";
@@ -194,8 +169,7 @@ function addBotMsg(text, chip = null) {
     let chipHtml = "";
     if (chip) {
         const icon = chip.isTransfer ? "🔄" : (chip.income ? "📥 +" : "📤 −");
-        const col = chip.income || chip.isTransfer ? "#55EFC4" : "#FF6B6B";
-        chipHtml = `<div class="txn-chip"><span style="color:${col}">${icon}${chip.amount}₪</span><span style="color:#888">${chip.desc}</span></div>`;
+        chipHtml = `<div class="txn-chip"><span style="color:#FFD700">${icon}${chip.amount}₪</span><span style="color:#888">${chip.desc}</span></div>`;
     }
     w.innerHTML = `<button class="del-msg" onclick="this.parentElement.remove();saveChatHistory()">✕</button><div class="bubble bot">${text}${chipHtml}</div><div class="btime">${nowTime()}</div>`;
     m.appendChild(w); scrollBottom();
@@ -208,116 +182,62 @@ function showTyping() {
     m.appendChild(w); scrollBottom(); return w;
 }
 
-// --- לוגיקה מרכזית (API & Actions) ---
 async function send() {
     const inp = document.getElementById("msginput");
     const text = inp.value.trim();
     if (!text || loading) return;
-
-    inp.value = ""; document.getElementById("sendbtn").disabled = true;
-    addUserMsg(text);
-
+    inp.value = ""; addUserMsg(text);
     if (!apiKey) { addBotMsg("⚠️ חסר מפתח API. הגדר בלשונית 📲"); return; }
-
     loading = true;
     const te = showTyping();
-    const bal = getBalances();
-    const pending = window._pendingTxn ? JSON.stringify(window._pendingTxn) : "none";
-
-    const sys = `Budget bot. Hebrew ONLY. JSON output. 
-    Status: cash=${bal.cash} bank=${bal.bank} bit=${bal.bit} spent=${bal.totalSpent} | Pending: ${pending}
-    Actions: add_expense, add_income, transfer, add_debt, pay_debt, ask_type, none
-    JSON: {"reply":"", "action":"", "transaction":{"desc":"", "amount":0, "category":"", "type":"cash|credit|bit", "is_income":false}, "transfer":{"from":"","to":"","amount":0}, "debt":{"person":"", "amount":0}}`;
-
     try {
+        const bal = getBalances();
+        const sys = `Budget bot. Hebrew ONLY. Status: cash=${bal.cash} bank=${bal.bank}. JSON: {"reply":"","action":"","transaction":{"desc":"","amount":0,"category":"","type":"cash|credit|bit"}}`;
         const data = await callAPI(sys + "\nUser: " + text);
         te.remove();
-        
         let raw = data.choices ? data.choices[0].message.content : data.candidates[0].content.parts[0].text;
         let p = JSON.parse(raw.replace(/```json|```/g, "").trim());
-
-        let chip = null;
-
-        // טיפול בטרנזקציה ממתינה (סוג תשלום)
-        if (p.action === "ask_type" && p.transaction) {
-            window._pendingTxn = p.transaction;
-        } else if (window._pendingTxn && !p.transaction?.type) {
-            const l = text.toLowerCase();
-            let type = /מזומן/.test(l) ? "cash" : /אשראי|כרטיס/.test(l) ? "credit" : /ביט/.test(l) ? "bit" : null;
-            if (type) {
-                p.transaction = { ...window._pendingTxn, type };
-                p.action = window._pendingTxn.is_income ? "add_income" : "add_expense";
-                window._pendingTxn = null;
-            }
-        }
-
-        // ביצוע פעולות
-        if (p.action === "add_expense" && p.transaction?.amount) {
-            const t = p.transaction; const m = nowMonth();
+        if (p.action === "add_expense" && p.transaction) {
+            const m = nowMonth();
             if(!txns[m]) txns[m] = [];
-            const newT = { id: Date.now(), date: todayStr(), desc: t.desc || text, amount: t.amount, category: t.category || categorize(t.desc || text), type: t.type || "cash" };
-            txns[m].push(newT); lsSet(LS.txns, txns);
-            chip = { ...newT, income: false };
-        } else if (p.action === "transfer" && p.transfer?.amount) {
-            const tr = p.transfer; transfers.push({ id: Date.now(), date: todayStr(), ...tr });
-            lsSet(LS.transfers, transfers);
-            chip = { amount: tr.amount, desc: `העברה`, isTransfer: true };
+            txns[m].push({ ...p.transaction, date: new Date().toISOString().slice(0,10), id: Date.now() });
+            lsSet(LS.txns, txns);
         }
-
-        addBotMsg(p.reply || "בוצע ✓", chip);
+        addBotMsg(p.reply || "עודכן ✓");
         saveChatHistory();
-    } catch (e) {
-        if(te) te.remove();
-        addBotMsg("⚠️ שגיאה בתקשורת. נסה שוב.");
-    } finally {
-        loading = false; document.getElementById("sendbtn").disabled = false;
-    }
+    } catch (e) { te.remove(); addBotMsg("שגיאה בחיבור ל-AI"); }
+    finally { loading = false; document.getElementById("sendbtn").disabled = false; }
 }
 
 async function callAPI(prompt) {
     const isGroq = apiKey.startsWith("gsk_");
     const url = isGroq ? "https://api.groq.com/openai/v1/chat/completions" : "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey;
-    
-    const body = isGroq ? {
-        model: "llama-3.3-70b-versatile",
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" }
-    } : {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: "application/json" }
-    };
-
-    const r = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...(isGroq ? { "Authorization": `Bearer ${apiKey}` } : {}) },
-        body: JSON.stringify(body)
-    });
+    const body = isGroq ? { model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: prompt }] } : { contents: [{ parts: [{ text: prompt }] }] };
+    const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", ...(isGroq ? { "Authorization": `Bearer ${apiKey}` } : {}) }, body: JSON.stringify(body) });
     return r.json();
 }
 
-// --- ניהול נתונים ---
 function saveApiKey() {
-    const val = document.getElementById("apikey-input").value.trim();
-    if (val.length < 10) return;
-    apiKey = val; localStorage.setItem(LS.apikey, JSON.stringify(val));
-    document.getElementById("apikey-status").textContent = "המפתח נשמר ✓";
-    setTimeout(() => switchView("chat"), 1000);
+    apiKey = document.getElementById("apikey-input").value.trim();
+    lsSet(LS.apikey, apiKey);
+    document.getElementById("apikey-status").textContent = "נשמר ✓";
 }
-
-function clearHistory() { if(confirm("למחוק הכל?")) { localStorage.removeItem(LS.chatHistory); document.getElementById("messages").innerHTML = ""; } }
 
 function saveChatHistory() {
     const msgs = Array.from(document.querySelectorAll(".bubble-wrap")).map(w => ({
         user: w.classList.contains("user"),
-        text: w.querySelector(".bubble").childNodes[0].textContent,
-        chip: w.querySelector(".txn-chip")?.innerHTML || null
-    })).slice(-30);
+        text: w.querySelector(".bubble").childNodes[0].textContent
+    })).slice(-20);
     localStorage.setItem(LS.chatHistory, JSON.stringify(msgs));
 }
 
 function restoreChatHistory() {
     const saved = lsGet(LS.chatHistory, []);
-    saved.forEach(m => m.user ? addUserMsg(m.text) : addBotMsg(m.text, m.chip ? { amount: "", desc: "", html: m.chip } : null));
+    if(saved.length > 0) {
+        saved.forEach(m => m.user ? addUserMsg(m.text) : addBotMsg(m.text));
+    } else {
+        sendWelcomeMessage(); // אם אין היסטוריה, שלח הודעת פתיחה
+    }
 }
 
 function switchView(v) {
@@ -325,46 +245,18 @@ function switchView(v) {
     document.querySelectorAll(".tab").forEach(el => el.classList.remove("active"));
     document.getElementById(v + "-view").classList.add("active");
     document.querySelector(`[data-view="${v}"]`).classList.add("active");
-    if(v === "summary") renderSummary();
 }
 
-function renderSummary() {
-    const bal = getBalances();
-    const cats = bal.currentTxns.reduce((r, t) => { r[t.category] = (r[t.category] || 0) + t.amount; return r; }, {});
-    
-    document.getElementById("summary-content").innerHTML = `
-        <div class="bal-grid">
-            <div class="bal-card"><div class="bal-label">מזומן</div><div class="bal-val">${bal.cash}₪</div></div>
-            <div class="bal-card"><div class="bal-label">בנק</div><div class="bal-val">${bal.bank}₪</div></div>
-            <div class="bal-card"><div class="bal-label">ביט</div><div class="bal-val">${bal.bit}₪</div></div>
-        </div>
-        <div class="scard">
-            <div class="scard-title">הוצאות לפי קטגוריה</div>
-            ${Object.entries(cats).map(([c, v]) => `
-                <div class="cat-row">
-                    <div class="cat-dot" style="background:${COLORS[c]}"></div>
-                    <div class="cat-name">${CAT_LABELS[c] || c}</div>
-                    <div class="cat-val">${v}₪</div>
-                </div>
-            `).join("")}
-        </div>
-    `;
-}
+function syncPush(k, v) { fetch(SYNC_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ key: k, value: JSON.stringify(v) }) }); }
 
-// --- סנכרון (Placeholder) ---
-function syncPush(k, v) { 
-    fetch(SYNC_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ key: k, value: JSON.stringify(v) }) }).catch(() => {});
-}
 async function syncAll() {
-    document.getElementById("synctext").textContent = "מסנכרן...";
-    try {
-        const r = await fetch(SYNC_URL);
-        const d = await r.json();
-        if(d.data) {
-            Object.keys(d.data).forEach(k => localStorage.setItem(k, d.data[k]));
-            location.reload();
-        }
-    } catch(e) { document.getElementById("synctext").textContent = "מוכן"; }
+    document.getElementById("synctext").textContent = "בסנכרון...";
+    const r = await fetch(SYNC_URL);
+    const d = await r.json();
+    if(d.data) {
+        Object.keys(d.data).forEach(k => localStorage.setItem(k, d.data[k]));
+        location.reload();
+    }
 }
 
 function setQuick(t) { document.getElementById("msginput").value = t; document.getElementById("sendbtn").disabled = false; }
