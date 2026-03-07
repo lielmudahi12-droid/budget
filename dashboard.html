@@ -457,7 +457,14 @@ function renderAll(){
     </div>`;
   }
 
+  // שמור ערכי inputs לפני החלפת HTML
+  const _saved={};
+  content.querySelectorAll('input,select,textarea').forEach(el=>{if(el.id)_saved[el.id]=el.value;});
+
   content.innerHTML = walletHtml + alertHtml + viewHtml;
+
+  // שחזר ערכי inputs אחרי החלפת HTML
+  Object.entries(_saved).forEach(([id,val])=>{const el=document.getElementById(id);if(el&&val)el.value=val;});
 
   // Charts
   if(currentView==="dashboard"){
@@ -625,6 +632,10 @@ function markPaid(id){debts=debts.map(d=>String(d.id)===String(id)?{...d,paid:tr
 function deleteDebt(id){if(!confirm('למחוק?'))return;debts=debts.filter(d=>String(d.id)!==String(id));lsSet(LS.debts,debts);renderAll();}
 
 // ── AUTO REFRESH every 5s (syncs with chat changes) ──
+// לא מרנדר כשהמשתמש מקליד
+let _userActive=false,_userTimer=null;
+document.addEventListener('input',()=>{_userActive=true;clearTimeout(_userTimer);_userTimer=setTimeout(()=>{_userActive=false;},3000);});
+document.addEventListener('focus',()=>{_userActive=true;clearTimeout(_userTimer);_userTimer=setTimeout(()=>{_userActive=false;},3000);},{capture:true});
 setInterval(()=>{
   allTxns=lsGet(LS.txns,{});
   income=lsGet(LS.income,[]);
@@ -632,7 +643,7 @@ setInterval(()=>{
   debts=lsGet(LS.debts,[]);
   wallet=lsGet(LS.wallet,wallet);
   updateSyncStatus();
-  renderAll();
+  if(!_userActive) renderAll();
 },5000);
 
 // ── INIT ──
