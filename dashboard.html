@@ -213,9 +213,9 @@ async function syncAll(){
 }
 
 const MONTHS_HE=["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
-const COLORS={food:"#FF6B6B",transport:"#4ECDC4",hobbies:"#A29BFE",social:"#FD79A8",beitar:"#FFD700",savings:"#55EFC4",other:"#636e72"};
-const CAT_LABELS={food:"🍔 אוכל",transport:"🚂 תחבורה",hobbies:"🎮 תחביבים",social:"👥 חברה",beitar:"⚽ ביתר",savings:"💰 חיסכון",other:"📦 אחר"};
-let BUDGETS=lsGet("bgt_budgets",{food:200,social:150,beitar:200,transport:100,hobbies:100,other:50});
+const COLORS={food:"#FF6B6B",transport:"#4ECDC4",hobbies:"#A29BFE",social:"#FD79A8",beitar:"#FFD700",savings:"#55EFC4",alcohol:"#E17055",other:"#636e72"};
+const CAT_LABELS={food:"🍔 אוכל",transport:"🚂 תחבורה",hobbies:"🎮 תחביבים",social:"👥 חברה",beitar:"⚽ ביתר",savings:"💰 חיסכון",alcohol:"🍺 אלכוהול",other:"📦 אחר"};
+let BUDGETS=lsGet("bgt_budgets",{food:200,social:150,beitar:200,transport:100,hobbies:100,alcohol:100,other:50});
 const PAY_LABELS={cash:"💵 מזומן",credit:"💳 אשראי",bit:"🔵 ביט"};
 const PAY_COLORS={cash:"#55EFC4",credit:"#4ECDC4",bit:"#6C9BFF"};
 const W_NAMES={cash:"מזומן",bank:"בנק",bit:"ביט"};
@@ -229,7 +229,8 @@ function categorize(desc){
   if(/שוורמה|פלאפל|אוכל|מסעדה|קפה|סושי|פיצה|מאפה|עוגה|סנדוויץ|ארוחה|טעמי|מים/.test(d))return"food";
   if(/רכבת|אוטובוס|מונית|אוברה|גט|טקסי|דלק|נסיעה|רב.קו/.test(d))return"transport";
   if(/ביתר|ירושלים|אצטדיון/.test(d))return"beitar";
-  if(/חבר|חברה|בילוי|מסיבה|קולנוע|סרט|בר/.test(d))return"social";
+  if(/בירה|יין|וויסקי|אלכוהול|בר|פאב|קוקטייל|shots|shot/.test(d))return"alcohol";
+  if(/חבר|חברה|בילוי|מסיבה|קולנוע|סרט/.test(d))return"social";
   if(/ספר|משחק|אוזניות|גיימינג|נטפליקס|ספוטיפיי/.test(d))return"hobbies";
   if(/חיסכון|שמירה/.test(d))return"savings";
   return"other";
@@ -242,7 +243,7 @@ let income=[];
 let transfers=[];
 let activeMonth=nowMonth();
 let currentView="dashboard";
-let pieChart=null,barChart=null,_chartsFirst=true;
+let pieChart=null,barChart=null,lineChart=null,heatChart=null,catCmpChart=null,_chartsFirst=true;
 
 function loadAll(){
   wallet=lsGet(LS.wallet,{cash:1300,bank:1620,bit:0});
@@ -250,7 +251,7 @@ function loadAll(){
   income=lsGet(LS.income,[]);
   transfers=lsGet(LS.transfers,[]);
   debts=lsGet(LS.debts,[]);
-  BUDGETS=lsGet(LS.budgets,{food:200,social:150,beitar:200,transport:100,hobbies:100,other:50});
+  BUDGETS=lsGet(LS.budgets,{food:200,social:150,beitar:200,transport:100,hobbies:100,alcohol:100,other:50});
   const months=Object.keys(allTxns);
   if(months.length>0&&!allTxns[activeMonth])activeMonth=months[months.length-1];
   updateSyncStatus();renderAll();
@@ -362,10 +363,27 @@ function renderAll(){
           <div class="stat-label">${k.l}</div>
         </div>`).join("")}
     </div>`;
+    // build daily data for current month
+    const daysInMonth=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
+    const dailySpend=Array(daysInMonth).fill(0);
+    const dailyRunning=[];
+    let runningTotal=0;
+    for(const t of cur){const d=parseInt((t.date||"").split("-")[2]||0)-1;if(d>=0&&d<daysInMonth)dailySpend[d]+=t.amount;}
+    for(let i=0;i<daysInMonth;i++){runningTotal+=dailySpend[i];dailyRunning.push(runningTotal);}
+    // heatmap data
+    const heatData=dailySpend.map((v,i)=>({day:i+1,val:v}));
+    const heatMax=Math.max(1,...heatData.map(h=>h.val));
+    const heatHtml=heatData.map(h=>{const pct=h.val/heatMax;const col=h.val===0?"#0A0A14":`rgba(255,${Math.round(107*(1-pct))},${Math.round(107*(1-pct))},${0.3+pct*0.7})`;return`<div title="${h.day} לחודש: ${h.val}₪" style="background:${col};border-radius:3px;height:28px;display:flex;align-items:center;justify-content:center;font-size:9px;color:${h.val>0?"#fff":"#222"};cursor:default;">${h.val>0?h.val:""}</div>`;}).join("");
+    // cat comparison multi-month
+    const last3months=Object.keys(allTxns).slice(-3);
     viewHtml+=`<div class="grid2">
       <div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">התפלגות — ${activeMonth}</div><div style="height:160px;position:relative;"><canvas id="pie-chart"></canvas></div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${Object.entries(cats).map(([k,v])=>`<span style="font-size:10px;color:#666;display:flex;align-items:center;gap:3px;"><span style="width:6px;height:6px;border-radius:50%;background:${COLORS[k]};display:inline-block;"></span>${CAT_LABELS[k]?.split(" ")[1]||k} ${v}₪</span>`).join("")}</div></div>
       <div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">חודשים + שנה 📅</div><div style="height:160px;position:relative;"><canvas id="bar-chart"></canvas></div></div>
     </div>`;
+    viewHtml+=`<div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">📈 הוצאות מצטברות — ${activeMonth}</div><div style="height:140px;position:relative;"><canvas id="line-chart"></canvas></div></div>`;
+    viewHtml+=`<div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">🔥 ימים חמים — ${activeMonth}</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">${heatHtml}</div></div>`;
+    viewHtml+=`<div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">📊 השוואת קטגוריות — 3 חודשים אחרונים</div><div style="height:160px;position:relative;"><canvas id="catcmp-chart"></canvas></div></div>`;
+    viewHtml+=`<div class="card" style="border-color:#55EFC418;"><div style="font-size:11px;color:#555;margin-bottom:10px;">💰 גרף חיסכון מצטבר</div><div style="height:140px;position:relative;"><canvas id="saving-chart"></canvas></div></div>`;
     viewHtml+=`<div class="card" style="border-color:#FFD70018;background:linear-gradient(135deg,#13131F,#1a1400);">
       <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#FFD700;">📅 סיכום שנתי — ${Math.round(yearSpent)}₪</div>
       <div class="grid3">${Object.entries(yearCats).filter(([k])=>k!=="savings").map(([k,v])=>`
@@ -405,7 +423,7 @@ function renderAll(){
     const totalDebt=unpaidDebts.reduce((s,d)=>s+d.amount,0);
     viewHtml+=`<div class="card" style="border-color:#6C9BFF25;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div style="font-size:12px;font-weight:700;color:#6C9BFF;">💳 חייבים לי — ${totalDebt}₪</div>
+        <div style="font-size:12px;font-weight:700;color:#6C9BFF;">💳 חובות — חייבים לי ${totalDebt}₪</div>
         <button class="btn-edit" onclick="toggleAddDebt()">+ הוסף</button>
       </div>
       <div id="add-debt-form" style="display:none;background:#0A0A14;border-radius:10px;padding:11px;margin-bottom:10px;">
@@ -430,7 +448,8 @@ function renderAll(){
   }
 
   if(currentView==="income"){
-    viewHtml+=`<div class="grid3">
+    viewHtml+=`<div style="font-size:11px;color:#555;font-weight:700;margin-bottom:8px;letter-spacing:1px;">📥 סך הכנסות החודש לכל ארנק</div>
+    <div class="grid3">
       ${[{l:"💵 מזומן",v:cashIncome,c:"#55EFC4"},{l:"🏦 בנק",v:bankIncome,c:"#4ECDC4"},{l:"🔵 ביט",v:bitIncome,c:"#6C9BFF"}].map(k=>`
         <div class="stat-card" style="border-color:${k.c}20;"><div class="stat-label">${k.l}</div><div class="stat-val" style="color:${k.c};font-size:24px;">${k.v}₪</div></div>`).join("")}
     </div>
@@ -487,50 +506,99 @@ function renderAll(){
   }
 
   if(currentView==="debts"){
-    const unpaid=debts.filter(d=>!d.paid);
-    const paid=debts.filter(d=>d.paid);
-    const totalUnpaid=unpaid.reduce((s,d)=>s+d.amount,0);
-    viewHtml+=`<div class="card" style="border-color:#6C9BFF25;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-        <div style="font-size:13px;font-weight:700;color:#6C9BFF;">💳 חייבים לי — ${totalUnpaid}₪</div>
+    // lent = others owe me, owe = I owe someone
+    const lentOpen=debts.filter(d=>!d.paid&&d.dir!=="owe");
+    const oweOpen=debts.filter(d=>!d.paid&&d.dir==="owe");
+    const paidAll=debts.filter(d=>d.paid);
+    const totalLent=lentOpen.reduce((s,d)=>s+d.amount,0);
+    const totalOwe=oweOpen.reduce((s,d)=>s+d.amount,0);
+    const{cash,bank,bit}=getBalances();
+    const total=cash+bank+bit;
+    const netTotal=total+totalLent-totalOwe;
+    const PAY_METHOD_LABELS={cash:"💵 מזומן",bank:"🏦 בנק",bit:"🔵 ביט"};
+    viewHtml+=`
+    <div class="card" style="border-color:#6C9BFF18;background:linear-gradient(135deg,#0D0D1F,#0A0A18);margin-bottom:8px;">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:120px;">
+          <div style="font-size:10px;color:#555;margin-bottom:3px;">חייבים לי</div>
+          <div style="font-size:20px;font-weight:900;color:#6C9BFF;">+${totalLent}₪</div>
+        </div>
+        <div style="flex:1;min-width:120px;">
+          <div style="font-size:10px;color:#555;margin-bottom:3px;">אני חייב</div>
+          <div style="font-size:20px;font-weight:900;color:#FF6B6B;">-${totalOwe}₪</div>
+        </div>
+        <div style="flex:1;min-width:140px;border-right:1px solid #ffffff08;padding-right:12px;">
+          <div style="font-size:10px;color:#555;margin-bottom:3px;">יתרה כוללת (כולל חובות)</div>
+          <div style="font-size:20px;font-weight:900;color:${netTotal>=0?"#FFD700":"#FF6B6B"};">${total}₪ <span style="font-size:13px;color:#555;">(${netTotal>=0?"+":""}${netTotal}₪)</span></div>
+        </div>
       </div>
-      <div style="display:grid;gap:9px;background:#0A0A14;border-radius:10px;padding:12px;margin-bottom:14px;">
-        <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:2px;">➕ הוסף חוב חדש</div>
+    </div>
+    <div class="card" style="border-color:#6C9BFF20;">
+      <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:10px;">➕ הוסף חוב</div>
+      <div style="display:grid;gap:8px;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <input class="inp" id="debt-person" placeholder="שם האדם" style="padding:8px 10px;">
+          <button id="debt-dir-lent" class="pay-opt" onclick="setDebtDir('lent')" style="border-color:#6C9BFF;background:#6C9BFF20;color:#6C9BFF;">💳 חייבים לי</button>
+          <button id="debt-dir-owe" class="pay-opt" onclick="setDebtDir('owe')" style="border-color:#ffffff12;background:transparent;color:#555;">💸 אני חייב</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <input class="inp" id="debt-person" placeholder="שם" style="padding:8px 10px;">
           <input class="inp" id="debt-amount" type="number" placeholder="סכום ₪" style="padding:8px 10px;">
         </div>
         <input class="inp" id="debt-desc" placeholder="הערה (אופציונלי)" style="padding:8px 10px;">
-        <button class="btn btn-gold" onclick="addDebt()">הוסף חוב</button>
+        <div style="font-size:11px;color:#555;margin-bottom:2px;">איך שילמתי / קיבלתי:</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+          <button id="debt-pay-cash" class="pay-opt" onclick="setDebtPay('cash')" style="border-color:#55EFC4;background:#55EFC420;color:#55EFC4;font-size:11px;">💵 מזומן</button>
+          <button id="debt-pay-bank" class="pay-opt" onclick="setDebtPay('bank')" style="border-color:#ffffff12;background:transparent;color:#555;font-size:11px;">🏦 בנק</button>
+          <button id="debt-pay-bit" class="pay-opt" onclick="setDebtPay('bit')" style="border-color:#ffffff12;background:transparent;color:#555;font-size:11px;">🔵 ביט</button>
+        </div>
+        <button class="btn btn-gold" onclick="addDebt()">הוסף</button>
       </div>
-      <div style="font-size:11px;font-weight:700;color:#888;margin-bottom:8px;">פתוחים (${unpaid.length})</div>
-      ${unpaid.length===0?'<div style="font-size:12px;color:#444;text-align:center;padding:10px;">אין חובות פתוחים 🎉</div>':
-        unpaid.map(d=>`
-          <div class="txn-row">
-            <div>
-              <div style="font-size:13px;color:#ddd;">${d.person}</div>
-              <div style="font-size:10px;color:#444;">${d.desc||""} · ${d.date}</div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <div style="font-weight:700;color:#6C9BFF;font-size:15px;">+${d.amount}₪</div>
-              <button onclick="markPaid('${d.id}')" style="padding:4px 10px;border-radius:7px;font-size:11px;border:none;background:#55EFC4;color:#000;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;">שולם ✓</button>
-              <button class="btn-red" onclick="deleteDebt('${d.id}')">🗑️</button>
-            </div>
-          </div>`).join("")}
-      ${paid.length>0?`
-        <div style="font-size:11px;font-weight:700;color:#444;margin-top:14px;margin-bottom:8px;">שולם (${paid.length})</div>
-        ${paid.map(d=>`
-          <div class="txn-row" style="opacity:0.4;">
-            <div>
-              <div style="font-size:13px;text-decoration:line-through;">${d.person}</div>
-              <div style="font-size:10px;color:#444;">${d.desc||""} · ${d.date}</div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <div style="font-weight:700;color:#55EFC4;font-size:14px;">✓ ${d.amount}₪</div>
-              <button class="btn-red" onclick="deleteDebt('${d.id}')">🗑️</button>
-            </div>
-          </div>`).join("")}`:""}
-    </div>`;
+    </div>
+    ${lentOpen.length>0?`<div style="font-size:11px;font-weight:700;color:#6C9BFF;margin-bottom:6px;">חייבים לי (${lentOpen.length})</div>
+    <div class="card" style="border-color:#6C9BFF20;padding:8px 14px;">
+      ${lentOpen.map(d=>`
+        <div class="txn-row">
+          <div>
+            <div style="font-size:13px;color:#ddd;">${d.person}</div>
+            <div style="font-size:10px;color:#444;">${d.desc||""} · ${d.date}${d.payMethod?" · "+PAY_METHOD_LABELS[d.payMethod]:""}</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div style="font-weight:700;color:#6C9BFF;font-size:15px;">+${d.amount}₪</div>
+            <button onclick="markPaid('${d.id}')" style="padding:4px 10px;border-radius:7px;font-size:11px;border:none;background:#55EFC4;color:#000;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;">קיבלתי ✓</button>
+            <button class="btn-red" onclick="deleteDebt('${d.id}')">🗑️</button>
+          </div>
+        </div>`).join("")}
+    </div>`:""}
+    ${oweOpen.length>0?`<div style="font-size:11px;font-weight:700;color:#FF6B6B;margin-bottom:6px;margin-top:8px;">אני חייב (${oweOpen.length})</div>
+    <div class="card" style="border-color:#FF6B6B20;padding:8px 14px;">
+      ${oweOpen.map(d=>`
+        <div class="txn-row">
+          <div>
+            <div style="font-size:13px;color:#ddd;">${d.person}</div>
+            <div style="font-size:10px;color:#444;">${d.desc||""} · ${d.date}${d.payMethod?" · "+PAY_METHOD_LABELS[d.payMethod]:""}</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div style="font-weight:700;color:#FF6B6B;font-size:15px;">-${d.amount}₪</div>
+            <button onclick="markPaid('${d.id}')" style="padding:4px 10px;border-radius:7px;font-size:11px;border:none;background:#FF6B6B;color:#fff;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;">שילמתי ✓</button>
+            <button class="btn-red" onclick="deleteDebt('${d.id}')">🗑️</button>
+          </div>
+        </div>`).join("")}
+    </div>`:""}
+    ${paidAll.length>0?`<div style="font-size:11px;font-weight:700;color:#444;margin-top:10px;margin-bottom:6px;">היסטוריה (${paidAll.length})</div>
+    <div class="card" style="padding:8px 14px;opacity:0.5;">
+      ${paidAll.map(d=>`
+        <div class="txn-row">
+          <div>
+            <div style="font-size:12px;text-decoration:line-through;color:#888;">${d.person} ${d.dir==="owe"?"(שילמתי)":"(קיבלתי)"}</div>
+            <div style="font-size:10px;color:#444;">${d.desc||""} · ${d.date}</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div style="font-size:13px;color:#444;">✓ ${d.amount}₪</div>
+            <button class="btn-red" onclick="deleteDebt('${d.id}')">🗑️</button>
+          </div>
+        </div>`).join("")}
+    </div>`:""}
+    `;
   }
 
   if(currentView==="add"){
@@ -596,7 +664,36 @@ function renderAll(){
     const pieCtx=document.getElementById("pie-chart")?.getContext("2d");
     if(pieCtx&&Object.keys(cats).length>0){
       if(pieChart)pieChart.destroy();
-      pieChart=new Chart(pieCtx,{type:"doughnut",data:{labels:Object.keys(cats).map(k=>CAT_LABELS[k]||k),datasets:[{data:Object.values(cats),backgroundColor:Object.keys(cats).map(k=>COLORS[k]||"#ddd"),borderWidth:0}]},options:{animation:_chartsFirst,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}₪`}}},cutout:"60%"}});
+      pieChart=new Chart(pieCtx,{
+        type:"doughnut",
+        data:{
+          labels:Object.keys(cats).map(k=>CAT_LABELS[k]||k),
+          datasets:[{data:Object.values(cats),backgroundColor:Object.keys(cats).map(k=>COLORS[k]||"#ddd"),borderWidth:0}]
+        },
+        plugins:[{
+          id:"pieLabels",
+          afterDatasetDraw(chart){
+            const{ctx,data}=chart;
+            const total=data.datasets[0].data.reduce((a,b)=>a+b,0);
+            chart.getDatasetMeta(0).data.forEach((arc,i)=>{
+              const val=data.datasets[0].data[i];
+              const pct=Math.round((val/total)*100);
+              if(pct<5)return;
+              const{x,y}=arc.tooltipPosition();
+              ctx.save();
+              ctx.font="bold 11px Heebo,sans-serif";
+              ctx.fillStyle="#fff";
+              ctx.textAlign="center";
+              ctx.textBaseline="middle";
+              ctx.shadowColor="#00000088";
+              ctx.shadowBlur=3;
+              ctx.fillText(pct+"%",x,y);
+              ctx.restore();
+            });
+          }
+        }],
+        options:{animation:_chartsFirst,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}₪ (${Math.round(ctx.parsed/Object.values(cats).reduce((a,b)=>a+b,0)*100)}%)`}}},cutout:"60%"}
+      });
     }
     const barCtx=document.getElementById("bar-chart")?.getContext("2d");
     if(barCtx){
@@ -606,6 +703,52 @@ function renderAll(){
       const datasets=Object.keys(COLORS).filter(k=>k!=="savings").map(k=>({label:CAT_LABELS[k]||k,data:[...months.map(m=>{const mt=allTxns[m]||[];return mt.filter(t=>t.category===k).reduce((s,t)=>s+t.amount,0);}),Object.values(allTxns).flat().filter(t=>t.category===k).reduce((s,t)=>s+t.amount,0)],backgroundColor:COLORS[k],stack:"a"}));
       barChart=new Chart(barCtx,{type:"bar",data:{labels:allMonthsAndYear.map(m=>m.split(" ")[0]),datasets},options:{animation:_chartsFirst,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label.split(" ").slice(1).join(" ")}: ${Math.round(ctx.parsed.y)}₪`}}},scales:{x:{stacked:true,ticks:{color:"#555",font:{size:9}},grid:{display:false}},y:{stacked:true,ticks:{color:"#444",font:{size:9}},grid:{color:"#ffffff07"}}}}});
     _chartsFirst=false;
+    }
+
+    // LINE CHART — cumulative daily spending
+    const lineCtx=document.getElementById("line-chart")?.getContext("2d");
+    if(lineCtx){
+      if(lineChart)lineChart.destroy();
+      const dm2=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
+      const ds2=Array(dm2).fill(0);
+      for(const t of cur){const d=parseInt((t.date||"").split("-")[2]||0)-1;if(d>=0&&d<dm2)ds2[d]+=t.amount;}
+      const running=[];let rt=0;for(let i=0;i<dm2;i++){rt+=ds2[i];running.push(rt);}
+      const today2=new Date().getDate();
+      const labels2=Array.from({length:dm2},(_,i)=>i+1);
+      lineChart=new Chart(lineCtx,{type:"line",data:{labels:labels2,datasets:[
+        {label:"הוצאות מצטברות",data:running,borderColor:"#FF6B6B",backgroundColor:"#FF6B6B18",fill:true,tension:0.4,pointRadius:0,pointHoverRadius:4},
+        {label:"קצב אחיד",data:labels2.map(d=>Math.round(totalSpent/Math.max(1,today2)*d)),borderColor:"#ffffff18",borderDash:[4,4],fill:false,tension:0,pointRadius:0}
+      ]},options:{animation:false,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}₪`}}},scales:{x:{ticks:{color:"#444",font:{size:9},maxTicksLimit:10},grid:{display:false}},y:{ticks:{color:"#444",font:{size:9}},grid:{color:"#ffffff07"}}}}});
+    }
+
+    // SAVINGS CHART — cumulative savings over all months
+    const savCtx=document.getElementById("saving-chart")?.getContext("2d");
+    if(savCtx){
+      if(typeof savingChart!=="undefined"&&savingChart)savingChart.destroy();
+      const allMonths=Object.keys(allTxns);
+      const savData=[];let cumSav=0;
+      for(const m of allMonths){const mt=allTxns[m]||[];cumSav+=mt.filter(t=>t.category==="savings").reduce((s,t)=>s+t.amount,0);savData.push(cumSav);}
+      const incData=[];let cumInc=0;
+      for(const m of allMonths){const mi=income.filter(i=>monthKey(i.date)===m);cumInc+=mi.reduce((s,i)=>s+i.amount,0);incData.push(cumInc);}
+      window.savingChart=new Chart(savCtx,{type:"line",data:{labels:allMonths.map(m=>m.split(" ")[0]),datasets:[
+        {label:"חיסכון",data:savData,borderColor:"#55EFC4",backgroundColor:"#55EFC418",fill:true,tension:0.4,pointRadius:3},
+        {label:"הכנסה מצטברת",data:incData,borderColor:"#FFD70066",borderDash:[4,4],fill:false,tension:0.4,pointRadius:0}
+      ]},options:{animation:false,responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#555",font:{size:9},boxWidth:10},position:"bottom"},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}₪`}}},scales:{x:{ticks:{color:"#444",font:{size:9}},grid:{display:false}},y:{ticks:{color:"#444",font:{size:9}},grid:{color:"#ffffff07"}}}}});
+    }
+
+    // CAT COMPARISON — last 3 months grouped bar
+    const catCtx=document.getElementById("catcmp-chart")?.getContext("2d");
+    if(catCtx){
+      if(catCmpChart)catCmpChart.destroy();
+      const last3=Object.keys(allTxns).slice(-3);
+      const mainCats=["food","transport","beitar","social","hobbies","other"];
+      const catDs=last3.map((m,mi)=>({
+        label:m.split(" ")[0],
+        data:mainCats.map(k=>(allTxns[m]||[]).filter(t=>t.category===k).reduce((s,t)=>s+t.amount,0)),
+        backgroundColor:[`rgba(78,205,196,${0.5+mi*0.2})`,`rgba(78,205,196,${0.5+mi*0.2})`,"#4ECDC4"][mi]||"#4ECDC4",
+        borderRadius:4
+      }));
+      catCmpChart=new Chart(catCtx,{type:"bar",data:{labels:mainCats.map(k=>CAT_LABELS[k]?.split(" ")[1]||k),datasets:catDs},options:{animation:false,responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#555",font:{size:9},boxWidth:8},position:"bottom"}},scales:{x:{ticks:{color:"#555",font:{size:9}},grid:{display:false}},y:{ticks:{color:"#444",font:{size:9}},grid:{color:"#ffffff07"}}}}});
     }
   }
   window._expType=window._expType||"cash";
@@ -747,12 +890,29 @@ function handleCSV(e){
   reader.readAsText(file,"utf-8");e.target.value="";
 }
 function toggleAddDebt(){const el=document.getElementById('add-debt-form');if(el)el.style.display=el.style.display==='none'||!el.style.display?'grid':'none';}
+let _debtDir="lent",_debtPay="cash";
+function setDebtDir(dir){
+  _debtDir=dir;
+  ["lent","owe"].forEach(k=>{
+    const b=document.getElementById("debt-dir-"+k);if(!b)return;
+    const c2=k==="lent"?"#6C9BFF":"#FF6B6B";
+    b.style.borderColor=k===dir?c2:"#ffffff12";b.style.background=k===dir?c2+"20":"transparent";b.style.color=k===dir?c2:"#555";
+  });
+}
+function setDebtPay(pay){
+  _debtPay=pay;
+  ["cash","bank","bit"].forEach(k=>{
+    const b=document.getElementById("debt-pay-"+k);if(!b)return;
+    const c2=k==="cash"?"#55EFC4":k==="bank"?"#4ECDC4":"#6C9BFF";
+    b.style.borderColor=k===pay?c2:"#ffffff12";b.style.background=k===pay?c2+"20":"transparent";b.style.color=k===pay?c2:"#555";
+  });
+}
 function addDebt(){
   const person=document.getElementById('debt-person').value.trim();
   const amount=parseFloat(document.getElementById('debt-amount').value);
   const desc=document.getElementById('debt-desc').value.trim();
   if(!person||!amount)return;
-  debts.push({id:Date.now(),date:todayStr(),person,amount,desc,paid:false});
+  debts.push({id:Date.now(),date:todayStr(),person,amount,desc,paid:false,dir:_debtDir,payMethod:_debtPay});
   lsSet(LS.debts,debts);
   document.getElementById('debt-person').value='';
   document.getElementById('debt-amount').value='';
@@ -961,7 +1121,7 @@ document.getElementById('main-content').innerHTML='<div style="text-align:center
       <input class="inp" id="edit-txn-desc" placeholder="תיאור">
       <input class="inp" id="edit-txn-amount" type="number" placeholder="סכום ₪">
       <input class="inp" id="edit-txn-date" type="date">
-      <select class="inp" id="edit-txn-cat"><option value="food">🍔 אוכל</option><option value="transport">🚂 תחבורה</option><option value="hobbies">🎮 תחביבים</option><option value="social">👥 חברה</option><option value="beitar">⚽ ביתר</option><option value="savings">💰 חיסכון</option><option value="other">📦 אחר</option></select>
+      <select class="inp" id="edit-txn-cat"><option value="food">🍔 אוכל</option><option value="transport">🚂 תחבורה</option><option value="hobbies">🎮 תחביבים</option><option value="social">👥 חברה</option><option value="beitar">⚽ ביתר</option><option value="savings">💰 חיסכון</option><option value="alcohol">🍺 אלכוהול</option><option value="other">📦 אחר</option></select>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
         <button class="pay-opt" id="ettype-cash" onclick="setEditTxnType('cash')" style="border-color:#55EFC4;background:#55EFC420;color:#55EFC4;">💵 מזומן</button>
         <button class="pay-opt" id="ettype-credit" onclick="setEditTxnType('credit')" style="border-color:#ffffff12;background:transparent;color:#555;">💳 אשראי</button>
