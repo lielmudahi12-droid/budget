@@ -173,11 +173,26 @@ async function syncAll(){
     const remote=await(await fetch(SYNC_URL)).json();
     if(!remote.ok)throw new Error();
     const rd=remote.data||{};
-    if(rd["bgt_txns"]){txns=JSON.parse(rd["bgt_txns"]);localStorage.setItem(LS.txns,rd["bgt_txns"]);}
-    if(rd["bgt_income"]){income=JSON.parse(rd["bgt_income"]);localStorage.setItem(LS.income,rd["bgt_income"]);}
+    // מיזוג חכם — קח את הגדול מבין Sheets ו-localStorage
+    if(rd["bgt_txns"]){
+      const rem=JSON.parse(rd["bgt_txns"]);const loc=lsGet(LS.txns,{});
+      const merged={...rem};
+      for(const m of Object.keys(loc)){if(!merged[m]||loc[m].length>merged[m].length)merged[m]=loc[m];}
+      txns=merged;localStorage.setItem(LS.txns,JSON.stringify(merged));
+    }
+    if(rd["bgt_income"]){
+      const rem=JSON.parse(rd["bgt_income"]);const loc=lsGet(LS.income,[]);
+      income=rem.length>=loc.length?rem:loc;localStorage.setItem(LS.income,JSON.stringify(income));
+    }
     if(rd["bgt_wallet"]){wallet=JSON.parse(rd["bgt_wallet"]);localStorage.setItem(LS.wallet,rd["bgt_wallet"]);}
-    if(rd["bgt_transfers"]){transfers=JSON.parse(rd["bgt_transfers"]);localStorage.setItem(LS.transfers,rd["bgt_transfers"]);}
-    if(rd["bgt_debts"]){debts=JSON.parse(rd["bgt_debts"]);localStorage.setItem(LS.debts,rd["bgt_debts"]);}
+    if(rd["bgt_transfers"]){
+      const rem=JSON.parse(rd["bgt_transfers"]);const loc=lsGet(LS.transfers,[]);
+      transfers=rem.length>=loc.length?rem:loc;localStorage.setItem(LS.transfers,JSON.stringify(transfers));
+    }
+    if(rd["bgt_debts"]){
+      const rem=JSON.parse(rd["bgt_debts"]);const loc=lsGet(LS.debts,[]);
+      debts=rem.length>=loc.length?rem:loc;localStorage.setItem(LS.debts,JSON.stringify(debts));
+    }
     if(rd["bgt_chat_history"]){const v=JSON.parse(rd["bgt_chat_history"]);localStorage.setItem(LS.chatHistory,JSON.stringify(v));}
     document.getElementById("synctext").textContent="מסונכרן ✓";
     document.getElementById("syncdot").style.background="#55EFC4";
