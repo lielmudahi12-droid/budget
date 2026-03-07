@@ -134,7 +134,7 @@
 </div>
 
 <script>
-const LS={wallet:"bgt_wallet",txns:"bgt_txns",income:"bgt_income",transfers:"bgt_transfers",debts:"bgt_debts"};
+const LS={wallet:"bgt_wallet",txns:"bgt_txns",income:"bgt_income",transfers:"bgt_transfers",debts:"bgt_debts",budgets:"bgt_budgets"};
 const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}};
 const SYNC_URL="https://script.google.com/macros/s/AKfycbxsVKlcH7iGj4gXmpc6o-bAt_zLZ-WOO_AGx-im0CBCcU_nkZ-HEAcMyvzt8YC793ck/exec";
 
@@ -215,7 +215,7 @@ async function syncAll(){
 const MONTHS_HE=["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
 const COLORS={food:"#FF6B6B",transport:"#4ECDC4",hobbies:"#A29BFE",social:"#FD79A8",beitar:"#FFD700",savings:"#55EFC4",other:"#636e72"};
 const CAT_LABELS={food:"🍔 אוכל",transport:"🚂 תחבורה",hobbies:"🎮 תחביבים",social:"👥 חברה",beitar:"⚽ ביתר",savings:"💰 חיסכון",other:"📦 אחר"};
-const BUDGETS={food:200,social:150,beitar:200,transport:100,hobbies:100,other:50};
+let BUDGETS=lsGet("bgt_budgets",{food:200,social:150,beitar:200,transport:100,hobbies:100,other:50});
 const PAY_LABELS={cash:"💵 מזומן",credit:"💳 אשראי",bit:"🔵 ביט"};
 const PAY_COLORS={cash:"#55EFC4",credit:"#4ECDC4",bit:"#6C9BFF"};
 const W_NAMES={cash:"מזומן",bank:"בנק",bit:"ביט"};
@@ -242,7 +242,7 @@ let income=[];
 let transfers=[];
 let activeMonth=nowMonth();
 let currentView="dashboard";
-let pieChart=null,barChart=null;
+let pieChart=null,barChart=null,_chartsFirst=true;
 
 function loadAll(){
   wallet=lsGet(LS.wallet,{cash:1300,bank:1620,bit:0});
@@ -250,6 +250,7 @@ function loadAll(){
   income=lsGet(LS.income,[]);
   transfers=lsGet(LS.transfers,[]);
   debts=lsGet(LS.debts,[]);
+  BUDGETS=lsGet(LS.budgets,{food:200,social:150,beitar:200,transport:100,hobbies:100,other:50});
   const months=Object.keys(allTxns);
   if(months.length>0&&!allTxns[activeMonth])activeMonth=months[months.length-1];
   updateSyncStatus();renderAll();
@@ -374,16 +375,31 @@ function renderAll(){
         </div>`).join("")}
       </div>
     </div>`;
-    viewHtml+=`<div class="card"><div style="font-size:12px;font-weight:700;margin-bottom:10px;">📊 ניצול תקציב — ${activeMonth}</div>
-      ${Object.entries(cats).filter(([k])=>k!=="savings"&&BUDGETS[k]).map(([k,v])=>{
-        const pct=Math.min(110,Math.round((v/BUDGETS[k])*100));const over=pct>100;
-        return`<div style="margin-bottom:9px;">
-          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
-            <span style="color:${over?"#FF6B6B":"#bbb"};">${CAT_LABELS[k]} ${over?"⚠️":""}</span>
-            <span style="color:${over?"#FF6B6B":"#555"};">${v}/${BUDGETS[k]}₪</span>
+    const totalMonthIncome=income.reduce((s,i)=>s+i.amount,0);
+    const incPct=totalMonthIncome>0?Math.min(100,Math.round((totalSpent/totalMonthIncome)*100)):0;
+    viewHtml+=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-size:12px;font-weight:700;">📊 ניצול תקציב — ${activeMonth}</div><div style="font-size:10px;color:#555;">לחץ על תקרה לעריכה</div></div>
+      ${Object.entries(BUDGETS).map(([k,limit])=>{
+        const v=cats[k]||0;if(!v&&!limit)return"";
+        const pct=Math.min(110,Math.round((v/limit)*100));const over=pct>100;
+        return`<div style="margin-bottom:11px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;align-items:center;">
+            <span style="color:${over?"#FF6B6B":"#bbb"};">${CAT_LABELS[k]||k} ${over?"⚠️":""}</span>
+            <span style="display:flex;align-items:center;gap:6px;">
+              <span style="color:${over?"#FF6B6B":"#888"};">${v}₪ /</span>
+              <span onclick="editBudget('${k}')" style="color:${over?"#FF6B6B":"#FFD700"};cursor:pointer;border-bottom:1px dashed #FFD70044;font-weight:700;">${limit}₪</span>
+            </span>
           </div>
           <div class="budget-bar-bg"><div class="budget-bar" style="width:${Math.min(100,pct)}%;background:${over?"#FF6B6B":COLORS[k]};"></div></div>
         </div>`;}).join("")||'<div style="font-size:12px;color:#444;text-align:center;padding:10px;">אין עסקאות עדיין</div>'}
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid #ffffff08;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;">
+          <span style="color:#888;font-weight:700;">💰 הוצאות מסך הכנסות החודש</span>
+          <span style="color:${incPct>=100?"#FF6B6B":incPct>=80?"#FFD700":"#55EFC4"};font-weight:700;">${totalSpent}₪ / ${totalMonthIncome}₪ (${incPct}%)</span>
+        </div>
+        <div style="background:#0A0A14;border-radius:5px;height:9px;overflow:hidden;">
+          <div style="height:100%;border-radius:5px;transition:width .4s;width:${incPct}%;background:${incPct>=100?"#FF6B6B":incPct>=80?"#FFD700":"#55EFC4"};"></div>
+        </div>
+      </div>
     </div>`;
     const unpaidDebts=debts.filter(d=>!d.paid);
     const totalDebt=unpaidDebts.reduce((s,d)=>s+d.amount,0);
@@ -442,6 +458,7 @@ function renderAll(){
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
             <div style="font-weight:700;color:#55EFC4;font-size:14px;">+${inc.amount}₪</div>
+            <button class="btn-edit" onclick="openEditIncome('${inc.id}')">✏️</button>
             <button class="btn-red" onclick="deleteIncome('${inc.id}')">🗑️</button>
           </div>
         </div>`).join("")||'<div style="font-size:12px;color:#444;text-align:center;padding:20px;">אין הכנסות עדיין</div>'}
@@ -462,6 +479,7 @@ function renderAll(){
           </div>
           <div style="display:flex;gap:6px;align-items:center;">
             <div style="font-weight:700;font-size:14px;color:${t.category==="beitar"?"#FFD700":t.category==="savings"?"#55EFC4":"#FF6B6B"};">−${t.amount}₪</div>
+            <button class="btn-edit" onclick="openEditTxn('${t.id}','${activeMonth}')">✏️</button>
             <button class="btn-red" onclick="deleteTxn('${t.id}','${activeMonth}')">🗑️</button>
           </div>
         </div>`).join("")||'<div style="font-size:12px;color:#444;text-align:center;padding:20px;">אין עסקאות עדיין</div>'}
@@ -578,7 +596,7 @@ function renderAll(){
     const pieCtx=document.getElementById("pie-chart")?.getContext("2d");
     if(pieCtx&&Object.keys(cats).length>0){
       if(pieChart)pieChart.destroy();
-      pieChart=new Chart(pieCtx,{type:"doughnut",data:{labels:Object.keys(cats).map(k=>CAT_LABELS[k]||k),datasets:[{data:Object.values(cats),backgroundColor:Object.keys(cats).map(k=>COLORS[k]||"#ddd"),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}₪`}}},cutout:"60%"}});
+      pieChart=new Chart(pieCtx,{type:"doughnut",data:{labels:Object.keys(cats).map(k=>CAT_LABELS[k]||k),datasets:[{data:Object.values(cats),backgroundColor:Object.keys(cats).map(k=>COLORS[k]||"#ddd"),borderWidth:0}]},options:{animation:_chartsFirst,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}₪`}}},cutout:"60%"}});
     }
     const barCtx=document.getElementById("bar-chart")?.getContext("2d");
     if(barCtx){
@@ -586,7 +604,8 @@ function renderAll(){
       const months=Object.keys(allTxns);
       const allMonthsAndYear=[...months,"שנה"];
       const datasets=Object.keys(COLORS).filter(k=>k!=="savings").map(k=>({label:CAT_LABELS[k]||k,data:[...months.map(m=>{const mt=allTxns[m]||[];return mt.filter(t=>t.category===k).reduce((s,t)=>s+t.amount,0);}),Object.values(allTxns).flat().filter(t=>t.category===k).reduce((s,t)=>s+t.amount,0)],backgroundColor:COLORS[k],stack:"a"}));
-      barChart=new Chart(barCtx,{type:"bar",data:{labels:allMonthsAndYear.map(m=>m.split(" ")[0]),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label.split(" ").slice(1).join(" ")}: ${Math.round(ctx.parsed.y)}₪`}}},scales:{x:{stacked:true,ticks:{color:"#555",font:{size:9}},grid:{display:false}},y:{stacked:true,ticks:{color:"#444",font:{size:9}},grid:{color:"#ffffff07"}}}}});
+      barChart=new Chart(barCtx,{type:"bar",data:{labels:allMonthsAndYear.map(m=>m.split(" ")[0]),datasets},options:{animation:_chartsFirst,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label.split(" ").slice(1).join(" ")}: ${Math.round(ctx.parsed.y)}₪`}}},scales:{x:{stacked:true,ticks:{color:"#555",font:{size:9}},grid:{display:false}},y:{stacked:true,ticks:{color:"#444",font:{size:9}},grid:{color:"#ffffff07"}}}}});
+    _chartsFirst=false;
     }
   }
   window._expType=window._expType||"cash";
@@ -624,17 +643,26 @@ function setIncType(t){
 }
 
 function openWalletModal(){
-  document.getElementById("w-cash").value=wallet.cash||0;
-  document.getElementById("w-bank").value=wallet.bank||0;
-  document.getElementById("w-bit").value=wallet.bit||0;
+  // Show CURRENT balances to user
+  const{cash,bank,bit}=getBalances();
+  document.getElementById("w-cash").value=cash;
+  document.getElementById("w-bank").value=bank;
+  document.getElementById("w-bit").value=bit;
   document.getElementById("wallet-modal").style.display="flex";
 }
 function closeWalletModal(){document.getElementById("wallet-modal").style.display="none";}
 function saveWallet(){
-  wallet={
+  // User enters desired CURRENT balance — reverse-engineer the initial wallet
+  const desired={
     cash:parseFloat(document.getElementById("w-cash").value)||0,
     bank:parseFloat(document.getElementById("w-bank").value)||0,
     bit:parseFloat(document.getElementById("w-bit").value)||0
+  };
+  const{cash:curCash,bank:curBank,bit:curBit}=getBalances();
+  wallet={
+    cash:(wallet.cash||0)+(desired.cash-curCash),
+    bank:(wallet.bank||0)+(desired.bank-curBank),
+    bit:(wallet.bit||0)+(desired.bit-curBit)
   };
   lsSet(LS.wallet,wallet);closeWalletModal();renderAll();
 }
@@ -797,6 +825,98 @@ function selectCalDay(ds){
   setTimeout(closeCal,200);
 }
 
+// ── EDIT FUNCTIONS ──
+function editBudget(cat){
+  const cur=BUDGETS[cat]||0;
+  const val=prompt(`תקרת תקציב ל-${CAT_LABELS[cat]||cat} (₪):`,cur);
+  if(val===null)return;
+  const n=parseFloat(val);
+  if(isNaN(n)||n<0)return;
+  BUDGETS[cat]=n;
+  lsSet(LS.budgets,BUDGETS);
+  renderAll();
+}
+
+function openEditTxn(id,month){
+  const t=(allTxns[month]||[]).find(x=>String(x.id)===String(id));
+  if(!t)return;
+  document.getElementById('edit-txn-id').value=id;
+  document.getElementById('edit-txn-month').value=month;
+  document.getElementById('edit-txn-desc').value=t.desc;
+  document.getElementById('edit-txn-amount').value=t.amount;
+  document.getElementById('edit-txn-date').value=t.date;
+  document.getElementById('edit-txn-cat').value=t.category;
+  _editTxnType=t.type;
+  ['cash','credit','bit'].forEach(k=>{
+    const b=document.getElementById('ettype-'+k);if(!b)return;
+    const c2=k==='cash'?'#55EFC4':k==='credit'?'#4ECDC4':'#6C9BFF';
+    b.style.borderColor=k===_editTxnType?c2:'#ffffff12';
+    b.style.background=k===_editTxnType?c2+'20':'transparent';
+    b.style.color=k===_editTxnType?c2:'#555';
+  });
+  document.getElementById('edit-txn-modal').style.display='flex';
+}
+let _editTxnType='cash';
+function setEditTxnType(t){
+  _editTxnType=t;
+  ['cash','credit','bit'].forEach(k=>{
+    const b=document.getElementById('ettype-'+k);if(!b)return;
+    const c2=k==='cash'?'#55EFC4':k==='credit'?'#4ECDC4':'#6C9BFF';
+    b.style.borderColor=k===t?c2:'#ffffff12';b.style.background=k===t?c2+'20':'transparent';b.style.color=k===t?c2:'#555';
+  });
+}
+function saveEditTxn(){
+  const id=document.getElementById('edit-txn-id').value;
+  const month=document.getElementById('edit-txn-month').value;
+  const desc=document.getElementById('edit-txn-desc').value.trim();
+  const amount=parseFloat(document.getElementById('edit-txn-amount').value);
+  const date=document.getElementById('edit-txn-date').value||todayStr();
+  const cat=document.getElementById('edit-txn-cat').value;
+  if(!desc||!amount)return;
+  allTxns[month]=(allTxns[month]||[]).map(t=>String(t.id)===String(id)?{...t,desc,amount,date,category:cat,type:_editTxnType}:t);
+  lsSet(LS.txns,allTxns);
+  document.getElementById('edit-txn-modal').style.display='none';
+  renderAll();
+}
+
+function openEditIncome(id){
+  const inc=income.find(x=>String(x.id)===String(id));
+  if(!inc)return;
+  document.getElementById('edit-inc-id').value=id;
+  document.getElementById('edit-inc-desc').value=inc.desc;
+  document.getElementById('edit-inc-amount').value=inc.amount;
+  document.getElementById('edit-inc-date').value=inc.date;
+  _editIncType=inc.type;
+  ['cash','bank','bit'].forEach(k=>{
+    const b=document.getElementById('eintype-'+k);if(!b)return;
+    const c2=k==='cash'?'#55EFC4':k==='bank'?'#4ECDC4':'#6C9BFF';
+    b.style.borderColor=k===_editIncType?c2:'#ffffff12';
+    b.style.background=k===_editIncType?c2+'20':'transparent';
+    b.style.color=k===_editIncType?c2:'#555';
+  });
+  document.getElementById('edit-inc-modal').style.display='flex';
+}
+let _editIncType='cash';
+function setEditIncType(t){
+  _editIncType=t;
+  ['cash','bank','bit'].forEach(k=>{
+    const b=document.getElementById('eintype-'+k);if(!b)return;
+    const c2=k==='cash'?'#55EFC4':k==='bank'?'#4ECDC4':'#6C9BFF';
+    b.style.borderColor=k===t?c2:'#ffffff12';b.style.background=k===t?c2+'20':'transparent';b.style.color=k===t?c2:'#555';
+  });
+}
+function saveEditIncome(){
+  const id=document.getElementById('edit-inc-id').value;
+  const desc=document.getElementById('edit-inc-desc').value.trim();
+  const amount=parseFloat(document.getElementById('edit-inc-amount').value);
+  const date=document.getElementById('edit-inc-date').value||todayStr();
+  if(!desc||!amount)return;
+  income=income.map(i=>String(i.id)===String(id)?{...i,desc,amount,date,type:_editIncType}:i);
+  lsSet(LS.income,income);
+  document.getElementById('edit-inc-modal').style.display='none';
+  renderAll();
+}
+
 // ── AUTO REFRESH ──
 let _userActive=false,_userTimer=null;
 document.addEventListener('input',()=>{_userActive=true;clearTimeout(_userTimer);_userTimer=setTimeout(()=>{_userActive=false;},3000);});
@@ -819,7 +939,7 @@ document.getElementById('main-content').innerHTML='<div style="text-align:center
 <!-- WALLET MODAL -->
 <div id="wallet-modal" style="display:none;position:fixed;inset:0;background:#000000aa;z-index:1000;align-items:center;justify-content:center;">
   <div style="background:#13131F;border:1px solid #55EFC430;border-radius:16px;padding:20px;width:90%;max-width:480px;margin:0 auto;">
-    <div style="font-size:14px;font-weight:700;color:#55EFC4;margin-bottom:14px;">✏️ עדכון יתרות התחלתיות</div>
+    <div style="font-size:14px;font-weight:700;color:#55EFC4;margin-bottom:14px;">✏️ עדכון יתרות נוכחיות</div>
     <div style="display:grid;gap:12px;margin-bottom:14px;">
       <div><div style="font-size:11px;color:#888;margin-bottom:5px;">💵 מזומן</div><input class="inp" id="w-cash" type="number" placeholder="0"></div>
       <div><div style="font-size:11px;color:#888;margin-bottom:5px;">🏦 בנק</div><input class="inp" id="w-bank" type="number" placeholder="0"></div>
@@ -828,6 +948,51 @@ document.getElementById('main-content').innerHTML='<div style="text-align:center
     <div style="display:flex;gap:8px;">
       <button class="btn btn-green" onclick="saveWallet()" style="flex:1;">שמור ✓</button>
       <button class="btn" onclick="closeWalletModal()" style="background:#1a1a2e;color:#888;border:1px solid #ffffff12;">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT TRANSACTION MODAL -->
+<div id="edit-txn-modal" style="display:none;position:fixed;inset:0;background:#000000bb;z-index:1001;align-items:center;justify-content:center;">
+  <div style="background:#13131F;border:1px solid #4ECDC430;border-radius:16px;padding:20px;width:90%;max-width:480px;">
+    <div style="font-size:14px;font-weight:700;color:#4ECDC4;margin-bottom:14px;">✏️ עריכת הוצאה</div>
+    <input type="hidden" id="edit-txn-id"><input type="hidden" id="edit-txn-month">
+    <div style="display:grid;gap:10px;margin-bottom:14px;">
+      <input class="inp" id="edit-txn-desc" placeholder="תיאור">
+      <input class="inp" id="edit-txn-amount" type="number" placeholder="סכום ₪">
+      <input class="inp" id="edit-txn-date" type="date">
+      <select class="inp" id="edit-txn-cat"><option value="food">🍔 אוכל</option><option value="transport">🚂 תחבורה</option><option value="hobbies">🎮 תחביבים</option><option value="social">👥 חברה</option><option value="beitar">⚽ ביתר</option><option value="savings">💰 חיסכון</option><option value="other">📦 אחר</option></select>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <button class="pay-opt" id="ettype-cash" onclick="setEditTxnType('cash')" style="border-color:#55EFC4;background:#55EFC420;color:#55EFC4;">💵 מזומן</button>
+        <button class="pay-opt" id="ettype-credit" onclick="setEditTxnType('credit')" style="border-color:#ffffff12;background:transparent;color:#555;">💳 אשראי</button>
+        <button class="pay-opt" id="ettype-bit" onclick="setEditTxnType('bit')" style="border-color:#ffffff12;background:transparent;color:#555;">🔵 ביט</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-green" onclick="saveEditTxn()" style="flex:1;">שמור ✓</button>
+      <button class="btn" onclick="document.getElementById('edit-txn-modal').style.display='none'" style="background:#1a1a2e;color:#888;border:1px solid #ffffff12;">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT INCOME MODAL -->
+<div id="edit-inc-modal" style="display:none;position:fixed;inset:0;background:#000000bb;z-index:1001;align-items:center;justify-content:center;">
+  <div style="background:#13131F;border:1px solid #55EFC430;border-radius:16px;padding:20px;width:90%;max-width:480px;">
+    <div style="font-size:14px;font-weight:700;color:#55EFC4;margin-bottom:14px;">✏️ עריכת הכנסה</div>
+    <input type="hidden" id="edit-inc-id">
+    <div style="display:grid;gap:10px;margin-bottom:14px;">
+      <input class="inp" id="edit-inc-desc" placeholder="תיאור">
+      <input class="inp" id="edit-inc-amount" type="number" placeholder="סכום ₪">
+      <input class="inp" id="edit-inc-date" type="date">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <button class="pay-opt" id="eintype-cash" onclick="setEditIncType('cash')" style="border-color:#55EFC4;background:#55EFC420;color:#55EFC4;">💵 מזומן</button>
+        <button class="pay-opt" id="eintype-bank" onclick="setEditIncType('bank')" style="border-color:#ffffff12;background:transparent;color:#555;">🏦 בנק</button>
+        <button class="pay-opt" id="eintype-bit" onclick="setEditIncType('bit')" style="border-color:#ffffff12;background:transparent;color:#555;">🔵 ביט</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-green" onclick="saveEditIncome()" style="flex:1;">שמור ✓</button>
+      <button class="btn" onclick="document.getElementById('edit-inc-modal').style.display='none'" style="background:#1a1a2e;color:#888;border:1px solid #ffffff12;">ביטול</button>
     </div>
   </div>
 </div>
