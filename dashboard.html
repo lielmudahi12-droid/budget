@@ -93,11 +93,38 @@ async function syncAll(){
     const r=await fetch(SYNC_URL);const d=await r.json();
     if(!d.ok)throw new Error();
     const rd=d.data||{};
-    if(rd["bgt_txns"]){allTxns=JSON.parse(rd["bgt_txns"]);localStorage.setItem(LS.txns,rd["bgt_txns"]);}
-    if(rd["bgt_income"]){income=JSON.parse(rd["bgt_income"]);localStorage.setItem(LS.income,rd["bgt_income"]);}
+
+    // מיזוג חכם — קח את הגדול מבין Sheets ו-localStorage
+    if(rd["bgt_txns"]){
+      const remote=JSON.parse(rd["bgt_txns"]);
+      const local=lsGet(LS.txns,{});
+      // מיזוג לפי חודש — קח את המערך הארוך יותר
+      const merged={...remote};
+      for(const m of Object.keys(local)){
+        if(!merged[m]||local[m].length>merged[m].length) merged[m]=local[m];
+      }
+      allTxns=merged;localStorage.setItem(LS.txns,JSON.stringify(merged));
+    }
+    if(rd["bgt_income"]){
+      const remote=JSON.parse(rd["bgt_income"]);
+      const local=lsGet(LS.income,[]);
+      // קח את המערך עם יותר פריטים
+      income=remote.length>=local.length?remote:local;
+      localStorage.setItem(LS.income,JSON.stringify(income));
+    }
     if(rd["bgt_wallet"]){wallet=JSON.parse(rd["bgt_wallet"]);localStorage.setItem(LS.wallet,rd["bgt_wallet"]);}
-    if(rd["bgt_transfers"]){transfers=JSON.parse(rd["bgt_transfers"]);localStorage.setItem(LS.transfers,rd["bgt_transfers"]);}
-    if(rd["bgt_debts"]){debts=JSON.parse(rd["bgt_debts"]);localStorage.setItem(LS.debts,rd["bgt_debts"]);}
+    if(rd["bgt_transfers"]){
+      const remote=JSON.parse(rd["bgt_transfers"]);
+      const local=lsGet(LS.transfers,[]);
+      transfers=remote.length>=local.length?remote:local;
+      localStorage.setItem(LS.transfers,JSON.stringify(transfers));
+    }
+    if(rd["bgt_debts"]){
+      const remote=JSON.parse(rd["bgt_debts"]);
+      const local=lsGet(LS.debts,[]);
+      debts=remote.length>=local.length?remote:local;
+      localStorage.setItem(LS.debts,JSON.stringify(debts));
+    }
     updateSyncStatus();
     renderAll();
   }catch{
