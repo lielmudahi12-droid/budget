@@ -17,8 +17,10 @@
   .topbar-row2{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center;}
   .nav-btn{padding:5px 12px;border-radius:14px;border:1px solid #ffffff18;background:transparent;color:#555;cursor:pointer;font-size:11px;font-family:'Heebo',sans-serif;transition:.15s;}
   .nav-btn.active{border-color:#FFD700;background:#FFD70015;color:#FFD700;}
-  .month-btn{padding:4px 11px;border-radius:12px;border:1px solid #ffffff12;background:transparent;color:#555;cursor:pointer;font-size:11px;font-family:'Heebo',sans-serif;transition:.15s;}
+  .month-btn{padding:4px 8px 4px 4px;border-radius:12px;border:1px solid #ffffff12;background:transparent;color:#555;cursor:pointer;font-size:11px;font-family:'Heebo',sans-serif;transition:.15s;display:inline-flex;align-items:center;gap:4px;}
   .month-btn.active{border-color:#4ECDC4;background:#4ECDC412;color:#4ECDC4;}
+  .month-del{width:14px;height:14px;border-radius:50%;background:#FF6B6B22;border:none;color:#FF6B6B66;cursor:pointer;font-size:9px;display:inline-flex;align-items:center;justify-content:center;font-family:'Heebo',sans-serif;transition:.15s;}
+  .month-del:hover{background:#FF6B6B44;color:#FF6B6B;}
   .sync-status{font-size:10px;color:#55EFC4;display:flex;align-items:center;gap:5px;margin-right:auto;}
   .sync-dot{width:6px;height:6px;border-radius:50%;background:#55EFC4;}
   .content{max-width:960px;margin:0 auto;padding:16px 20px 40px;min-height:0;}
@@ -50,6 +52,33 @@
   select.inp{cursor:pointer;}
   .pay-toggle{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
   .pay-opt{padding:9px;border-radius:10px;border:1px solid #ffffff12;background:transparent;color:#555;cursor:pointer;font-size:12px;font-family:'Heebo',sans-serif;font-weight:600;transition:.15s;}
+
+  /* ── Date Picker ── */
+  .date-btn{padding:10px 14px;border-radius:10px;border:1px solid #ffffff12;background:#0A0A14;color:#E8E8F0;font-size:13px;font-family:'Heebo',sans-serif;width:100%;outline:none;cursor:pointer;text-align:right;}
+  .date-btn.placeholder{color:#555;}
+  .cal-modal{display:none;position:fixed;inset:0;background:#000000bb;z-index:2000;align-items:center;justify-content:center;}
+  .cal-modal.open{display:flex;}
+  .cal-box{background:#13131F;border-radius:18px;overflow:hidden;width:300px;box-shadow:0 20px 60px #000;}
+  .cal-header{background:linear-gradient(135deg,#1a3a1a,#0E2A0E);padding:18px 16px 14px;text-align:center;}
+  .cal-year{font-size:13px;color:#55EFC4;margin-bottom:4px;cursor:pointer;}
+  .cal-month-nav{display:flex;align-items:center;justify-content:space-between;}
+  .cal-nav-btn{background:none;border:none;color:#55EFC4;font-size:18px;cursor:pointer;padding:4px 8px;}
+  .cal-month-name{font-size:20px;font-weight:800;color:#fff;}
+  .cal-selected-day{font-size:32px;font-weight:900;color:#55EFC4;margin-top:6px;}
+  .cal-body{padding:12px;}
+  .cal-dow{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:4px;}
+  .cal-dow span{font-size:10px;color:#444;padding:4px 0;}
+  .cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+  .cal-day{padding:7px 0;text-align:center;border-radius:50%;cursor:pointer;font-size:13px;color:#888;background:none;border:none;font-family:'Heebo',sans-serif;transition:.15s;}
+  .cal-day:hover{background:#55EFC420;color:#55EFC4;}
+  .cal-day.today{color:#FFD700;font-weight:700;}
+  .cal-day.selected{background:#55EFC4;color:#000;font-weight:800;}
+  .cal-day.empty{cursor:default;}
+  .cal-day.empty:hover{background:none;}
+  .cal-footer{padding:8px 12px 12px;display:flex;justify-content:space-between;}
+  .cal-clear{background:none;border:none;color:#FF6B6B88;cursor:pointer;font-size:12px;font-family:'Heebo',sans-serif;}
+  .cal-cancel{background:none;border:none;color:#555;cursor:pointer;font-size:12px;font-family:'Heebo',sans-serif;}
+
   @media(max-width:600px){.grid2,.grid4{grid-template-columns:1fr 1fr;}.w-grid{grid-template-columns:1fr 1fr;}}
 </style>
 </head>
@@ -79,13 +108,70 @@
 
 <div class="content" id="main-content"></div>
 
+<!-- DATE PICKER MODAL -->
+<div class="cal-modal" id="cal-modal" onclick="if(event.target===this)closeCal()">
+  <div class="cal-box">
+    <div class="cal-header">
+      <div class="cal-year" id="cal-year-label" onclick="cyclYear()"></div>
+      <div class="cal-month-nav">
+        <button class="cal-nav-btn" onclick="calPrevMonth()">‹</button>
+        <div class="cal-month-name" id="cal-month-label"></div>
+        <button class="cal-nav-btn" onclick="calNextMonth()">›</button>
+      </div>
+      <div class="cal-selected-day" id="cal-selected-label">בחר יום</div>
+    </div>
+    <div class="cal-body">
+      <div class="cal-dow">
+        <span>א'</span><span>ב'</span><span>ג'</span><span>ד'</span><span>ה'</span><span>ו'</span><span>ש'</span>
+      </div>
+      <div class="cal-days" id="cal-days"></div>
+    </div>
+    <div class="cal-footer">
+      <button class="cal-clear" onclick="clearCal()">נקה</button>
+      <button class="cal-cancel" onclick="closeCal()">ביטול</button>
+    </div>
+  </div>
+</div>
+
 <script>
-// ── SHARED localStorage KEYS (same as chat!) ──
 const LS={wallet:"bgt_wallet",txns:"bgt_txns",income:"bgt_income",transfers:"bgt_transfers",debts:"bgt_debts"};
 const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}};
 const SYNC_URL="https://script.google.com/macros/s/AKfycbxsVKlcH7iGj4gXmpc6o-bAt_zLZ-WOO_AGx-im0CBCcU_nkZ-HEAcMyvzt8YC793ck/exec";
-async function syncPush(key,value){try{await fetch(SYNC_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,value:JSON.stringify(value)})})}catch{}}
+
+// ── syncPush with debounce ──
+let _sQ={},_sTimer=null;
+function syncPush(key,value){
+  _sQ[key]=value;clearTimeout(_sTimer);
+  _sTimer=setTimeout(async()=>{
+    for(const[k,v]of Object.entries(_sQ)){
+      try{await fetch(SYNC_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:k,value:JSON.stringify(v)})});}catch{}
+      delete _sQ[k];
+    }
+  },2500);
+}
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));syncPush(k,v);}catch{}};
+
+// ── Smart merge by ID ──
+function mergeArraysById(remote,local){
+  const map={};
+  for(const item of remote)map[item.id]=item;
+  for(const item of local)if(!map[item.id])map[item.id]=item;
+  return Object.values(map);
+}
+function mergeTxnsByMonth(remote,local){
+  const merged={...remote};
+  for(const m of Object.keys(local)){
+    if(!merged[m]){merged[m]=local[m];}
+    else{
+      const byId={};
+      for(const t of merged[m])byId[t.id]=t;
+      for(const t of local[m])if(!byId[t.id])byId[t.id]=t;
+      merged[m]=Object.values(byId);
+    }
+  }
+  return merged;
+}
+
 async function syncAll(){
   try{
     document.getElementById("sync-text").textContent="מסנכרן...";
@@ -93,43 +179,36 @@ async function syncAll(){
     const r=await fetch(SYNC_URL);const d=await r.json();
     if(!d.ok)throw new Error();
     const rd=d.data||{};
-
-    // מיזוג חכם — קח את הגדול מבין Sheets ו-localStorage
     if(rd["bgt_txns"]){
       const remote=JSON.parse(rd["bgt_txns"]);
       const local=lsGet(LS.txns,{});
-      // מיזוג לפי חודש — קח את המערך הארוך יותר
-      const merged={...remote};
-      for(const m of Object.keys(local)){
-        if(!merged[m]||local[m].length>merged[m].length) merged[m]=local[m];
-      }
-      allTxns=merged;localStorage.setItem(LS.txns,JSON.stringify(merged));
+      allTxns=mergeTxnsByMonth(remote,local);
+      localStorage.setItem(LS.txns,JSON.stringify(allTxns));
     }
     if(rd["bgt_income"]){
       const remote=JSON.parse(rd["bgt_income"]);
       const local=lsGet(LS.income,[]);
-      // קח את המערך עם יותר פריטים
-      income=remote.length>=local.length?remote:local;
+      income=mergeArraysById(remote,local);
       localStorage.setItem(LS.income,JSON.stringify(income));
     }
     if(rd["bgt_wallet"]){wallet=JSON.parse(rd["bgt_wallet"]);localStorage.setItem(LS.wallet,rd["bgt_wallet"]);}
     if(rd["bgt_transfers"]){
       const remote=JSON.parse(rd["bgt_transfers"]);
       const local=lsGet(LS.transfers,[]);
-      transfers=remote.length>=local.length?remote:local;
+      transfers=mergeArraysById(remote,local);
       localStorage.setItem(LS.transfers,JSON.stringify(transfers));
     }
     if(rd["bgt_debts"]){
       const remote=JSON.parse(rd["bgt_debts"]);
       const local=lsGet(LS.debts,[]);
-      debts=remote.length>=local.length?remote:local;
+      debts=mergeArraysById(remote,local);
       localStorage.setItem(LS.debts,JSON.stringify(debts));
     }
-    updateSyncStatus();
-    renderAll();
+    updateSyncStatus();renderAll();
   }catch{
     document.getElementById("sync-text").textContent="אין חיבור";
     document.getElementById("sync-dot").style.background="#FF6B6B";
+    loadAll();
   }
 }
 
@@ -156,7 +235,6 @@ function categorize(desc){
   return"other";
 }
 
-// ── STATE ──
 let wallet={cash:1300,bank:1620,bit:0};
 let debts=[];
 let allTxns={};
@@ -173,17 +251,15 @@ function loadAll(){
   transfers=lsGet(LS.transfers,[]);
   debts=lsGet(LS.debts,[]);
   const months=Object.keys(allTxns);
-  if(months.length>0&&!allTxns[activeMonth]) activeMonth=months[months.length-1];
-  updateSyncStatus();
-  renderAll();
+  if(months.length>0&&!allTxns[activeMonth])activeMonth=months[months.length-1];
+  updateSyncStatus();renderAll();
 }
 
 function updateSyncStatus(){
-  document.getElementById("sync-text").textContent="מעודכן " + new Date().toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});
+  document.getElementById("sync-text").textContent="מעודכן "+new Date().toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});
   document.getElementById("sync-dot").style.background="#55EFC4";
 }
 
-// ── BALANCES ──
 function getBalances(){
   const cur=allTxns[activeMonth]||[];
   const ci=income.filter(i=>i.type==="cash").reduce((s,i)=>s+i.amount,0);
@@ -214,7 +290,6 @@ function byCat(txns){
   return r;
 }
 
-// ── RENDER ──
 function setView(v){
   currentView=v;
   document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
@@ -228,6 +303,18 @@ function setMonth(m){
   renderAll();
 }
 
+function deleteMonth(m,e){
+  e.stopPropagation();
+  if(!confirm(`למחוק את כל נתוני ${m}?`))return;
+  delete allTxns[m];
+  lsSet(LS.txns,allTxns);
+  if(activeMonth===m){
+    const months=Object.keys(allTxns);
+    activeMonth=months.length>0?months[months.length-1]:nowMonth();
+  }
+  renderAll();
+}
+
 function renderAll(){
   renderMonthTabs();
   const{cash,bank,bit,cashSpent,bankSpent,bitSpent,cashIncome,bankIncome,bitIncome,totalSpent,totalSaved,cur}=getBalances();
@@ -238,10 +325,8 @@ function renderAll(){
   const yearCats=byCat(yearTxns);
   const yearSpent=yearTxns.filter(t=>t.category!=="savings").reduce((s,t)=>s+t.amount,0);
   const alerts=Object.entries(cats).filter(([k,v])=>k!=="savings"&&BUDGETS[k]&&v>BUDGETS[k]);
-
   const content=document.getElementById("main-content");
 
-  // WALLET (always shown)
   let walletHtml=`
     <div class="wallet-card">
       <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -268,7 +353,6 @@ function renderAll(){
   let viewHtml="";
 
   if(currentView==="dashboard"){
-    // Stats row
     viewHtml+=`<div class="grid4">
       ${[{l:"סה״כ הוצאות",v:`${Math.round(totalSpent)}₪`,i:"💸",c:"#FF6B6B"},{l:"נחסך",v:`${Math.round(totalSaved)}₪`,i:"💰",c:"#55EFC4"},{l:"עסקאות",v:cur.length,i:"📝",c:"#A29BFE"},{l:"⚽ ביתר",v:`${cats.beitar||0}₪`,i:"🟡",c:"#FFD700"}].map(k=>`
         <div class="stat-card" style="border-color:${k.c}18;">
@@ -277,14 +361,10 @@ function renderAll(){
           <div class="stat-label">${k.l}</div>
         </div>`).join("")}
     </div>`;
-
-    // Charts row
     viewHtml+=`<div class="grid2">
       <div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">התפלגות — ${activeMonth}</div><div style="height:160px;position:relative;"><canvas id="pie-chart"></canvas></div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${Object.entries(cats).map(([k,v])=>`<span style="font-size:10px;color:#666;display:flex;align-items:center;gap:3px;"><span style="width:6px;height:6px;border-radius:50%;background:${COLORS[k]};display:inline-block;"></span>${CAT_LABELS[k]?.split(" ")[1]||k} ${v}₪</span>`).join("")}</div></div>
       <div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">חודשים + שנה 📅</div><div style="height:160px;position:relative;"><canvas id="bar-chart"></canvas></div></div>
     </div>`;
-
-    // Yearly summary
     viewHtml+=`<div class="card" style="border-color:#FFD70018;background:linear-gradient(135deg,#13131F,#1a1400);">
       <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#FFD700;">📅 סיכום שנתי — ${Math.round(yearSpent)}₪</div>
       <div class="grid3">${Object.entries(yearCats).filter(([k])=>k!=="savings").map(([k,v])=>`
@@ -294,8 +374,6 @@ function renderAll(){
         </div>`).join("")}
       </div>
     </div>`;
-
-    // Budget bars
     viewHtml+=`<div class="card"><div style="font-size:12px;font-weight:700;margin-bottom:10px;">📊 ניצול תקציב — ${activeMonth}</div>
       ${Object.entries(cats).filter(([k])=>k!=="savings"&&BUDGETS[k]).map(([k,v])=>{
         const pct=Math.min(110,Math.round((v/BUDGETS[k])*100));const over=pct>100;
@@ -307,8 +385,6 @@ function renderAll(){
           <div class="budget-bar-bg"><div class="budget-bar" style="width:${Math.min(100,pct)}%;background:${over?"#FF6B6B":COLORS[k]};"></div></div>
         </div>`;}).join("")||'<div style="font-size:12px;color:#444;text-align:center;padding:10px;">אין עסקאות עדיין</div>'}
     </div>`;
-
-    // Debts section
     const unpaidDebts=debts.filter(d=>!d.paid);
     const totalDebt=unpaidDebts.reduce((s,d)=>s+d.amount,0);
     viewHtml+=`<div class="card" style="border-color:#6C9BFF25;">
@@ -316,7 +392,7 @@ function renderAll(){
         <div style="font-size:12px;font-weight:700;color:#6C9BFF;">💳 חייבים לי — ${totalDebt}₪</div>
         <button class="btn-edit" onclick="toggleAddDebt()">+ הוסף</button>
       </div>
-      <div id="add-debt-form" style="display:none;background:#0A0A14;border-radius:10px;padding:11px;margin-bottom:10px;display:none;">
+      <div id="add-debt-form" style="display:none;background:#0A0A14;border-radius:10px;padding:11px;margin-bottom:10px;">
         <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;">
           <input class="inp" id="debt-person" placeholder="שם" style="padding:7px 10px;">
           <input class="inp" id="debt-amount" type="number" placeholder="סכום ₪" style="padding:7px 10px;">
@@ -347,7 +423,8 @@ function renderAll(){
       <div style="display:grid;gap:9px;">
         <input class="inp" id="inc-desc" placeholder="מקור ההכנסה">
         <input class="inp" id="inc-amount" type="number" placeholder="סכום (₪)">
-        <input class="inp" id="inc-date" type="date">
+        <button class="date-btn placeholder" id="inc-date-btn" onclick="openCal('inc-date-btn','inc-date-val')">📅 בחר תאריך</button>
+        <input type="hidden" id="inc-date-val">
         <div class="pay-toggle">
           ${[["cash","💵 מזומן","#55EFC4"],["bank","🏦 בנק","#4ECDC4"],["bit","🔵 ביט","#6C9BFF"]].map(([t,l,c])=>`
             <button class="pay-opt" id="inctype-${t}" onclick="setIncType('${t}')" style="border-color:${t==="cash"?"#55EFC4":"#ffffff12"};background:${t==="cash"?"#55EFC420":"transparent"};color:${t==="cash"?"#55EFC4":"#555"};">${l}</button>`).join("")}
@@ -445,11 +522,12 @@ function renderAll(){
       <div style="display:grid;gap:9px;">
         <input class="inp" id="exp-desc" placeholder="מה קנית?">
         <input class="inp" id="exp-amount" type="number" placeholder="סכום (₪)">
-        <input class="inp" id="exp-date" type="date">
+        <button class="date-btn placeholder" id="exp-date-btn" onclick="openCal('exp-date-btn','exp-date-val')">📅 בחר תאריך</button>
+        <input type="hidden" id="exp-date-val">
         <select class="inp" id="exp-cat">${Object.entries(CAT_LABELS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select>
         <div class="pay-toggle">
           ${[["cash","💵 מזומן","#55EFC4"],["credit","💳 אשראי","#4ECDC4"],["bit","🔵 ביט","#6C9BFF"]].map(([t,l,c])=>`
-            <button class="pay-opt" id="exptype-${t}" onclick="setExpType('${t}')" style="border-color:${t==="cash"?"#55EFC4":"#ffffff12"};background:${t==="cash"?"#55EFC420":"transparent"};color:${t==="cash"?"#55EFC4":"#555"};">${l}</button>`).join("")}
+            <button class="pay-opt" id="exptype-${t}" onclick="setExpType('${t}')" style="border-color:${t==="cash"?"#55EFC4":"#ffffff12"};background:${t==="cash"?"#55EFC420":"transparent"};color:${t==="cash"?"#55EFC4":"#555"};">${t==="cash"?"💵 מזומן":t==="credit"?"💳 אשראי":"🔵 ביט"}</button>`).join("")}
         </div>
         <button class="btn btn-gold" onclick="addExpense()">הוסף הוצאה</button>
       </div>
@@ -487,21 +565,21 @@ function renderAll(){
   // שמור ערכי inputs לפני החלפת HTML
   const _saved={};
   content.querySelectorAll('input,select,textarea').forEach(el=>{if(el.id)_saved[el.id]=el.value;});
+  const _savedBtnText={};
+  ['exp-date-btn','inc-date-btn'].forEach(id=>{const el=content.querySelector('#'+id);if(el&&!el.classList.contains('placeholder'))_savedBtnText[id]=el.textContent;});
 
-  content.innerHTML = walletHtml + alertHtml + viewHtml;
+  content.innerHTML=walletHtml+alertHtml+viewHtml;
 
-  // שחזר ערכי inputs אחרי החלפת HTML
+  // שחזר ערכי inputs
   Object.entries(_saved).forEach(([id,val])=>{const el=document.getElementById(id);if(el&&val)el.value=val;});
+  Object.entries(_savedBtnText).forEach(([id,txt])=>{const el=document.getElementById(id);if(el){el.textContent=txt;el.classList.remove('placeholder');}});
 
-  // Charts
   if(currentView==="dashboard"){
-    // Pie
     const pieCtx=document.getElementById("pie-chart")?.getContext("2d");
     if(pieCtx&&Object.keys(cats).length>0){
       if(pieChart)pieChart.destroy();
       pieChart=new Chart(pieCtx,{type:"doughnut",data:{labels:Object.keys(cats).map(k=>CAT_LABELS[k]||k),datasets:[{data:Object.values(cats),backgroundColor:Object.keys(cats).map(k=>COLORS[k]||"#ddd"),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}₪`}}},cutout:"60%"}});
     }
-    // Bar
     const barCtx=document.getElementById("bar-chart")?.getContext("2d");
     if(barCtx){
       if(barChart)barChart.destroy();
@@ -511,8 +589,6 @@ function renderAll(){
       barChart=new Chart(barCtx,{type:"bar",data:{labels:allMonthsAndYear.map(m=>m.split(" ")[0]),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label.split(" ").slice(1).join(" ")}: ${Math.round(ctx.parsed.y)}₪`}}},scales:{x:{stacked:true,ticks:{color:"#555",font:{size:9}},grid:{display:false}},y:{stacked:true,ticks:{color:"#444",font:{size:9}},grid:{color:"#ffffff07"}}}}});
     }
   }
-
-  // Init form states
   window._expType=window._expType||"cash";
   window._incType=window._incType||"cash";
 }
@@ -521,7 +597,11 @@ function renderMonthTabs(){
   const months=Object.keys(allTxns);
   const tabs=document.getElementById("month-tabs");
   if(!tabs)return;
-  tabs.innerHTML=months.map(m=>`<button class="month-btn${m===activeMonth?" active":""}" data-month="${m}" onclick="setMonth('${m}')">${m}</button>`).join("");
+  tabs.innerHTML=months.map(m=>`
+    <button class="month-btn${m===activeMonth?" active":""}" data-month="${m}" onclick="setMonth('${m}')">
+      <span onclick="deleteMonth('${m}',event)" class="month-del">✕</span>
+      ${m}
+    </button>`).join("");
 }
 
 // ── ACTIONS ──
@@ -549,24 +629,20 @@ function openWalletModal(){
   document.getElementById("w-bit").value=wallet.bit||0;
   document.getElementById("wallet-modal").style.display="flex";
 }
-function closeWalletModal(){
-  document.getElementById("wallet-modal").style.display="none";
-}
+function closeWalletModal(){document.getElementById("wallet-modal").style.display="none";}
 function saveWallet(){
   wallet={
     cash:parseFloat(document.getElementById("w-cash").value)||0,
     bank:parseFloat(document.getElementById("w-bank").value)||0,
     bit:parseFloat(document.getElementById("w-bit").value)||0
   };
-  lsSet(LS.wallet,wallet);
-  closeWalletModal();
-  renderAll();
+  lsSet(LS.wallet,wallet);closeWalletModal();renderAll();
 }
 
 function addExpense(){
   const desc=document.getElementById("exp-desc").value.trim();
   const amount=parseFloat(document.getElementById("exp-amount").value);
-  const date=document.getElementById("exp-date").value||todayStr();
+  const date=document.getElementById("exp-date-val").value||todayStr();
   const cat=document.getElementById("exp-cat").value;
   if(!desc||!amount)return;
   const month=monthKey(date);
@@ -575,17 +651,21 @@ function addExpense(){
   lsSet(LS.txns,allTxns);
   activeMonth=month;
   document.getElementById("exp-desc").value="";document.getElementById("exp-amount").value="";
+  document.getElementById("exp-date-val").value="";
+  const btn=document.getElementById("exp-date-btn");if(btn){btn.textContent="📅 בחר תאריך";btn.classList.add("placeholder");}
   renderAll();
 }
 
 function addIncome(){
   const desc=document.getElementById("inc-desc").value.trim();
   const amount=parseFloat(document.getElementById("inc-amount").value);
-  const date=document.getElementById("inc-date").value||todayStr();
+  const date=document.getElementById("inc-date-val").value||todayStr();
   if(!desc||!amount)return;
   income.push({id:Date.now(),date,desc,amount,type:_incType});
   lsSet(LS.income,income);
   document.getElementById("inc-desc").value="";document.getElementById("inc-amount").value="";
+  document.getElementById("inc-date-val").value="";
+  const btn=document.getElementById("inc-date-btn");if(btn){btn.textContent="📅 בחר תאריך";btn.classList.add("placeholder");}
   renderAll();
 }
 
@@ -594,13 +674,11 @@ function deleteTxn(id,month){
   allTxns[month]=(allTxns[month]||[]).filter(t=>String(t.id)!==String(id));
   lsSet(LS.txns,allTxns);renderAll();
 }
-
 function deleteIncome(id){
   if(!confirm("למחוק הכנסה זו?"))return;
   income=income.filter(i=>String(i.id)!==String(id));
   lsSet(LS.income,income);renderAll();
 }
-
 function doTransfer(){
   const from=document.getElementById("tr-from").value;
   const to=document.getElementById("tr-to").value;
@@ -612,13 +690,12 @@ function doTransfer(){
   alert(`✅ הועבר ${amount}₪ מ${W_NAMES[from]} ל${W_NAMES[to]}`);
   renderAll();
 }
-
 function handleCSV(e){
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=(ev)=>{
     const text=ev.target.result.replace(/^\uFEFF/,"");
-    const delim=text.split(/\r?\n/)[0].includes(";")?";":","
+    const delim=text.split(/\r?\n/)[0].includes(";")?";":",";
     const lines=text.trim().split(/\r?\n/);
     const results=[];
     for(let i=1;i<lines.length;i++){
@@ -641,66 +718,112 @@ function handleCSV(e){
   };
   reader.readAsText(file,"utf-8");e.target.value="";
 }
-
-function toggleAddDebt(){const el=document.getElementById('add-debt-form');el.style.display=el.style.display==='none'?'grid':'none';}
+function toggleAddDebt(){const el=document.getElementById('add-debt-form');if(el)el.style.display=el.style.display==='none'||!el.style.display?'grid':'none';}
 function addDebt(){
   const person=document.getElementById('debt-person').value.trim();
   const amount=parseFloat(document.getElementById('debt-amount').value);
   const desc=document.getElementById('debt-desc').value.trim();
   if(!person||!amount)return;
-  debts.push({id:Date.now(),date:new Date().toISOString().slice(0,10),person,amount,desc,paid:false});
+  debts.push({id:Date.now(),date:todayStr(),person,amount,desc,paid:false});
   lsSet(LS.debts,debts);
   document.getElementById('debt-person').value='';
   document.getElementById('debt-amount').value='';
-  document.getElementById('debt-desc').value='';
+  if(document.getElementById('debt-desc'))document.getElementById('debt-desc').value='';
   renderAll();
 }
 function markPaid(id){debts=debts.map(d=>String(d.id)===String(id)?{...d,paid:true}:d);lsSet(LS.debts,debts);renderAll();}
 function deleteDebt(id){if(!confirm('למחוק?'))return;debts=debts.filter(d=>String(d.id)!==String(id));lsSet(LS.debts,debts);renderAll();}
 
-// ── AUTO REFRESH every 5s (syncs with chat changes) ──
-// לא מרנדר כשהמשתמש מקליד
+// ── CUSTOM DATE PICKER ──
+let _calTarget=null,_calValTarget=null,_calYear=null,_calMonth=null,_calSelected=null;
+const CAL_DAYS_HE=["א","ב","ג","ד","ה","ו","ש"];
+
+function openCal(btnId,valId){
+  _calTarget=btnId;_calValTarget=valId;
+  const existing=document.getElementById(valId)?.value;
+  const d=existing?new Date(existing):new Date();
+  _calYear=d.getFullYear();_calMonth=d.getMonth();
+  _calSelected=existing||null;
+  renderCal();
+  document.getElementById('cal-modal').classList.add('open');
+}
+function closeCal(){document.getElementById('cal-modal').classList.remove('open');}
+function clearCal(){
+  if(_calValTarget)document.getElementById(_calValTarget).value="";
+  if(_calTarget){const b=document.getElementById(_calTarget);if(b){b.textContent="📅 בחר תאריך";b.classList.add("placeholder");}}
+  closeCal();
+}
+function calPrevMonth(){_calMonth--;if(_calMonth<0){_calMonth=11;_calYear--;}renderCal();}
+function calNextMonth(){_calMonth++;if(_calMonth>11){_calMonth=0;_calYear++;}renderCal();}
+function cyclYear(){
+  const y=parseInt(prompt("הכנס שנה:",_calYear));
+  if(y&&y>2000&&y<2100){_calYear=y;renderCal();}
+}
+function renderCal(){
+  document.getElementById('cal-year-label').textContent=_calYear;
+  document.getElementById('cal-month-label').textContent=MONTHS_HE[_calMonth];
+  if(_calSelected){
+    const sd=new Date(_calSelected);
+    document.getElementById('cal-selected-label').textContent=`${sd.getDate()} ב${MONTHS_HE[sd.getMonth()]}`;
+  } else {
+    document.getElementById('cal-selected-label').textContent="בחר יום";
+  }
+  const firstDay=new Date(_calYear,_calMonth,1).getDay();
+  const daysInMonth=new Date(_calYear,_calMonth+1,0).getDate();
+  const today=todayStr();
+  let html="";
+  // empty cells before first day (Sunday=0)
+  for(let i=0;i<firstDay;i++)html+=`<button class="cal-day empty"></button>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${_calYear}-${String(_calMonth+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    const isToday=ds===today;
+    const isSel=ds===_calSelected;
+    html+=`<button class="cal-day${isToday?" today":""}${isSel?" selected":""}" onclick="selectCalDay('${ds}')">${d}</button>`;
+  }
+  document.getElementById('cal-days').innerHTML=html;
+}
+function selectCalDay(ds){
+  _calSelected=ds;
+  if(_calValTarget)document.getElementById(_calValTarget).value=ds;
+  if(_calTarget){
+    const b=document.getElementById(_calTarget);
+    if(b){
+      const d=new Date(ds);
+      b.textContent=`📅 ${d.getDate()} ${MONTHS_HE[d.getMonth()]} ${d.getFullYear()}`;
+      b.classList.remove("placeholder");
+    }
+  }
+  renderCal();
+  setTimeout(closeCal,200);
+}
+
+// ── AUTO REFRESH ──
 let _userActive=false,_userTimer=null;
 document.addEventListener('input',()=>{_userActive=true;clearTimeout(_userTimer);_userTimer=setTimeout(()=>{_userActive=false;},3000);});
 document.addEventListener('focus',()=>{_userActive=true;clearTimeout(_userTimer);_userTimer=setTimeout(()=>{_userActive=false;},3000);},{capture:true});
 setInterval(()=>{
-  allTxns=lsGet(LS.txns,{});
-  income=lsGet(LS.income,[]);
-  transfers=lsGet(LS.transfers,[]);
-  debts=lsGet(LS.debts,[]);
-  wallet=lsGet(LS.wallet,wallet);
+  allTxns=lsGet(LS.txns,{});income=lsGet(LS.income,[]);transfers=lsGet(LS.transfers,[]);debts=lsGet(LS.debts,[]);wallet=lsGet(LS.wallet,wallet);
   updateSyncStatus();
-  if(!_userActive) renderAll();
+  if(!_userActive)renderAll();
 },5000);
 
 // ── INIT ──
-// הצג מסך טעינה ומשוך מ-Sheets קודם
 document.getElementById('main-content').innerHTML='<div style="text-align:center;padding:60px;color:#FFD700;font-size:18px;">⚽ טוען נתונים...</div>';
 (async()=>{
-  // תמיד קודם מ-Sheets, אחר כך מ-localStorage
   await syncAll();
-  // אם syncAll נכשל, טען מ-localStorage
-  if(Object.keys(allTxns).length===0) loadAll();
+  if(Object.keys(allTxns).length===0)loadAll();
   setInterval(syncAll,30000);
 })();
 </script>
+
 <!-- WALLET MODAL -->
 <div id="wallet-modal" style="display:none;position:fixed;inset:0;background:#000000aa;z-index:1000;align-items:center;justify-content:center;">
   <div style="background:#13131F;border:1px solid #55EFC430;border-radius:16px;padding:20px;width:90%;max-width:480px;margin:0 auto;">
     <div style="font-size:14px;font-weight:700;color:#55EFC4;margin-bottom:14px;">✏️ עדכון יתרות התחלתיות</div>
     <div style="display:grid;gap:12px;margin-bottom:14px;">
-      <div>
-        <div style="font-size:11px;color:#888;margin-bottom:5px;">💵 מזומן</div>
-        <input class="inp" id="w-cash" type="number" placeholder="0">
-      </div>
-      <div>
-        <div style="font-size:11px;color:#888;margin-bottom:5px;">🏦 בנק</div>
-        <input class="inp" id="w-bank" type="number" placeholder="0">
-      </div>
-      <div>
-        <div style="font-size:11px;color:#888;margin-bottom:5px;">🔵 ביט</div>
-        <input class="inp" id="w-bit" type="number" placeholder="0">
-      </div>
+      <div><div style="font-size:11px;color:#888;margin-bottom:5px;">💵 מזומן</div><input class="inp" id="w-cash" type="number" placeholder="0"></div>
+      <div><div style="font-size:11px;color:#888;margin-bottom:5px;">🏦 בנק</div><input class="inp" id="w-bank" type="number" placeholder="0"></div>
+      <div><div style="font-size:11px;color:#888;margin-bottom:5px;">🔵 ביט</div><input class="inp" id="w-bit" type="number" placeholder="0"></div>
     </div>
     <div style="display:flex;gap:8px;">
       <button class="btn btn-green" onclick="saveWallet()" style="flex:1;">שמור ✓</button>
