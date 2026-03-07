@@ -373,15 +373,29 @@ function renderAll(){
     // heatmap data
     const heatData=dailySpend.map((v,i)=>({day:i+1,val:v}));
     const heatMax=Math.max(1,...heatData.map(h=>h.val));
-    const heatHtml=heatData.map(h=>{const pct=h.val/heatMax;const col=h.val===0?"#0A0A14":`rgba(255,${Math.round(107*(1-pct))},${Math.round(107*(1-pct))},${0.3+pct*0.7})`;return`<div title="${h.day} לחודש: ${h.val}₪" style="background:${col};border-radius:3px;height:28px;display:flex;align-items:center;justify-content:center;font-size:9px;color:${h.val>0?"#fff":"#222"};cursor:default;">${h.val>0?h.val:""}</div>`;}).join("");
+    // figure out what day-of-week month starts on
+    const heatYear=new Date().getFullYear();
+    const heatMonthIdx=new Date().getMonth();
+    const heatFirstDow=new Date(heatYear,heatMonthIdx,1).getDay(); // 0=Sun
+    const DOW_HE=["א","ב","ג","ד","ה","ו","ש"];
+    const dowHeader=DOW_HE.map(d=>`<div style="text-align:center;font-size:9px;color:#333;padding-bottom:3px;">${d}</div>`).join("");
+    const emptyPrefix=Array(heatFirstDow).fill(`<div></div>`).join("");
+    const heatHtml=heatData.map(h=>{
+      const pct=h.val/heatMax;
+      const col=h.val===0?"#0A0A14":`rgba(255,${Math.round(107*(1-pct))},${Math.round(107*(1-pct))},${0.3+pct*0.7})`;
+      return`<div title="${h.day} לחודש: ${h.val}₪" style="background:${col};border-radius:4px;height:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:default;">
+        <span style="font-size:8px;color:${h.val>0?"#ffffff88":"#333"};">${h.day}</span>
+        ${h.val>0?`<span style="font-size:9px;font-weight:700;color:#fff;">${h.val}₪</span>`:""}
+      </div>`;
+    }).join("");
     // cat comparison multi-month
     const last3months=Object.keys(allTxns).slice(-3);
     viewHtml+=`<div class="grid2">
       <div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">התפלגות — ${activeMonth}</div><div style="height:160px;position:relative;"><canvas id="pie-chart"></canvas></div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${Object.entries(cats).map(([k,v])=>`<span style="font-size:10px;color:#666;display:flex;align-items:center;gap:3px;"><span style="width:6px;height:6px;border-radius:50%;background:${COLORS[k]};display:inline-block;"></span>${CAT_LABELS[k]?.split(" ")[1]||k} ${v}₪</span>`).join("")}</div></div>
       <div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">חודשים + שנה 📅</div><div style="height:160px;position:relative;"><canvas id="bar-chart"></canvas></div></div>
     </div>`;
-    viewHtml+=`<div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">📈 הוצאות מצטברות — ${activeMonth}</div><div style="height:140px;position:relative;"><canvas id="line-chart"></canvas></div></div>`;
-    viewHtml+=`<div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">🔥 ימים חמים — ${activeMonth}</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">${heatHtml}</div></div>`;
+    viewHtml+=`<div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">📈 הוצאות מצטברות — ${activeMonth}<span style="font-size:10px;color:#444;margin-right:8px;">הקו הרציף = כמה הוצאת | הקו המקווקו = תחזית אם תמשיך בקצב זה עד סוף החודש</span></div><div style="height:160px;position:relative;"><canvas id="line-chart"></canvas></div></div>`;
+    viewHtml+=`<div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">🔥 ימים חמים — ${activeMonth}</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">${dowHeader}${emptyPrefix}${heatHtml}</div></div>`;
     viewHtml+=`<div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">📊 השוואת קטגוריות — 3 חודשים אחרונים</div><div style="height:160px;position:relative;"><canvas id="catcmp-chart"></canvas></div></div>`;
     viewHtml+=`<div class="card" style="border-color:#55EFC418;"><div style="font-size:11px;color:#555;margin-bottom:10px;">💰 גרף חיסכון מצטבר</div><div style="height:140px;position:relative;"><canvas id="saving-chart"></canvas></div></div>`;
     viewHtml+=`<div class="card" style="border-color:#FFD70018;background:linear-gradient(135deg,#13131F,#1a1400);">
@@ -715,10 +729,14 @@ function renderAll(){
       const running=[];let rt=0;for(let i=0;i<dm2;i++){rt+=ds2[i];running.push(rt);}
       const today2=new Date().getDate();
       const labels2=Array.from({length:dm2},(_,i)=>i+1);
+      const projectedEnd=Math.round(totalSpent/Math.max(1,today2)*daysInMonth);
       lineChart=new Chart(lineCtx,{type:"line",data:{labels:labels2,datasets:[
-        {label:"הוצאות מצטברות",data:running,borderColor:"#FF6B6B",backgroundColor:"#FF6B6B18",fill:true,tension:0.4,pointRadius:0,pointHoverRadius:4},
-        {label:"קצב אחיד",data:labels2.map(d=>Math.round(totalSpent/Math.max(1,today2)*d)),borderColor:"#ffffff18",borderDash:[4,4],fill:false,tension:0,pointRadius:0}
-      ]},options:{animation:false,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}₪`}}},scales:{x:{ticks:{color:"#444",font:{size:9},maxTicksLimit:10},grid:{display:false}},y:{ticks:{color:"#444",font:{size:9}},grid:{color:"#ffffff07"}}}}});
+        {label:"הוצאות בפועל (מצטבר)",data:running,borderColor:"#FF6B6B",backgroundColor:"#FF6B6B18",fill:true,tension:0.4,pointRadius:0,pointHoverRadius:4},
+        {label:`תחזית לסוף חודש (${projectedEnd}₪)`,data:labels2.map(d=>Math.round(totalSpent/Math.max(1,today2)*d)),borderColor:"#ffffff33",borderDash:[5,5],fill:false,tension:0,pointRadius:0}
+      ]},options:{animation:false,responsive:true,maintainAspectRatio:false,plugins:{
+        legend:{display:true,labels:{color:"#555",font:{size:9},boxWidth:12,padding:8},position:"bottom"},
+        tooltip:{callbacks:{title:ctx=>`יום ${ctx[0].label} לחודש`,label:ctx=>`${ctx.dataset.label.split("(")[0].trim()}: ${Math.round(ctx.parsed.y)}₪`}}
+      },scales:{x:{title:{display:true,text:"יום בחודש",color:"#333",font:{size:8}},ticks:{color:"#444",font:{size:9},maxTicksLimit:10},grid:{display:false}},y:{title:{display:true,text:"₪ מצטבר",color:"#333",font:{size:8}},ticks:{color:"#444",font:{size:9}},grid:{color:"#ffffff07"}}}}});
     }
 
     // SAVINGS CHART — cumulative savings over all months
@@ -741,7 +759,7 @@ function renderAll(){
     if(catCtx){
       if(catCmpChart)catCmpChart.destroy();
       const last3=Object.keys(allTxns).slice(-3);
-      const mainCats=["food","transport","beitar","social","hobbies","other"];
+      const mainCats=["food","transport","beitar","social","hobbies","alcohol","other"];
       const catDs=last3.map((m,mi)=>({
         label:m.split(" ")[0],
         data:mainCats.map(k=>(allTxns[m]||[]).filter(t=>t.category===k).reduce((s,t)=>s+t.amount,0)),
