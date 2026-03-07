@@ -215,8 +215,8 @@ let apiKey=lsGet(LS.apikey,null)||localStorage.getItem(LS.apikey);
 let loading=false;
 window._pendingTxn=null;
 
-const COLORS={food:"#FF6B6B",transport:"#4ECDC4",hobbies:"#A29BFE",social:"#FD79A8",beitar:"#FFD700",savings:"#55EFC4",other:"#636e72"};
-const CAT_LABELS={food:"🍔 אוכל",transport:"🚂 תחבורה",hobbies:"🎮 תחביבים",social:"👥 חברה",beitar:"⚽ ביתר",savings:"💰 חיסכון",other:"📦 אחר"};
+const COLORS={food:"#FF6B6B",transport:"#4ECDC4",hobbies:"#A29BFE",social:"#FD79A8",beitar:"#FFD700",savings:"#55EFC4",alcohol:"#E17055",other:"#636e72"};
+const CAT_LABELS={food:"🍔 אוכל",transport:"🚂 תחבורה",hobbies:"🎮 תחביבים",social:"👥 חברה",beitar:"⚽ ביתר",savings:"💰 חיסכון",alcohol:"🍺 אלכוהול",other:"📦 אחר"};
 const TYPE_ICON={cash:"💵",credit:"💳",bit:"🔵"};
 const W_NAMES={cash:"מזומן",bank:"בנק",bit:"ביט"};
 
@@ -231,6 +231,7 @@ function categorize(desc){
   if(/שוורמה|פלאפל|אוכל|מסעדה|קפה|סושי|פיצה|מאפה|עוגה|סנדוויץ|ארוחה|טעמי|מים/.test(d))return"food";
   if(/רכבת|אוטובוס|מונית|אוברה|גט|טקסי|דלק|נסיעה/.test(d))return"transport";
   if(/ביתר|ירושלים|כרטיס|משחק|אצטדיון/.test(d))return"beitar";
+  if(/בירה|יין|וויסקי|אלכוהול|בר|פאב|קוקטייל|shots|shot/.test(d))return"alcohol";
   if(/חבר|חברה|בילוי|מסיבה|קולנוע|סרט/.test(d))return"social";
   if(/ספר|משחק|אוזניות|גיימינג|יוטיוב|נטפליקס/.test(d))return"hobbies";
   if(/חיסכון|שמירה|קופה/.test(d))return"savings";
@@ -366,7 +367,7 @@ async function send(){
   const totalDebt=debts.filter(d=>!d.paid).reduce((s,d)=>s+d.amount,0);
   const cats=currentTxns.reduce((r,t)=>{r[t.category]=(r[t.category]||0)+t.amount;return r;},{});
   const catStr=Object.entries(cats).map(([k,v])=>k+":"+v).join(" ")||"none";
-  const sys="Budget bot. Hebrew ONLY. Max 10 words. Emojis. Transaction confirmed->say: רשמתי 👍 + summary.\nS:cash="+cashBal+" bank="+bankBal+" bit="+bitBal+" debt="+totalDebt+" spent="+totalSpent+"\nC:"+catStr+"\nP:"+pending+"\nR:no_type->ask_type|expense->add_expense|income->add_income|transfer->transfer|owes->add_debt|paid->pay_debt\nT:cash|credit|bit K:food|transport|hobbies|social|beitar|savings|other\nJSON:{reply:'',action:'',transaction:{desc:'',amount:0,category:'',type:'',date:'YYYY-MM-DD',is_income:false},transfer:{from:'',to:'',amount:0},debt:{person:'',amount:0,desc:''}}";
+  const sys="Budget bot. Hebrew ONLY. Max 10 words. Emojis. Transaction confirmed->say: רשמתי 👍 + summary.\nS:cash="+cashBal+" bank="+bankBal+" bit="+bitBal+" debt="+totalDebt+" spent="+totalSpent+"\nC:"+catStr+"\nP:"+pending+"\nR:no_type->ask_type|expense->add_expense|income->add_income|transfer->transfer|owes->add_debt|paid->pay_debt\nT:cash|credit|bit K:food|transport|hobbies|social|beitar|savings|alcohol|other\nJSON:{reply:'',action:'',transaction:{desc:'',amount:0,category:'',type:'',date:'YYYY-MM-DD',is_income:false},transfer:{from:'',to:'',amount:0},debt:{person:'',amount:0,desc:''}}";
 
   const msgEls=[...document.querySelectorAll(".bubble-wrap")].slice(-4);
   const hist=msgEls.map(w=>(w.classList.contains("user")?"U:":"A:")+w.querySelector(".bubble")?.childNodes[0]?.textContent?.trim()).filter(Boolean).join("\n");
