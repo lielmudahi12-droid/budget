@@ -145,7 +145,7 @@ function syncPush(key,value){
   _sQ[key]=value;clearTimeout(_sTimer);
   _sTimer=setTimeout(async()=>{
     for(const[k,v]of Object.entries(_sQ)){
-      try{const val=encodeURIComponent(JSON.stringify(v));const ky=encodeURIComponent(k);await fetch(`${SYNC_URL}?action=set&key=${ky}&value=${val}`,{mode:"no-cors"});}catch{}
+      try{const body2=JSON.stringify({key:k,value:JSON.stringify(v)});const ctrl2=new AbortController();const tid2=setTimeout(()=>ctrl2.abort(),8000);await fetch(SYNC_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:body2,signal:ctrl2.signal});clearTimeout(tid2);}catch{}
       delete _sQ[k];
     }
   },2500);
@@ -174,6 +174,21 @@ function mergeTxnsByMonth(remote,local){
 }
 
 
+async function pushKey(k,v){
+  const body=JSON.stringify({key:k,value:JSON.stringify(v)});
+  const ctrl=new AbortController();
+  const tid=setTimeout(()=>ctrl.abort(),8000);
+  try{
+    await fetch(SYNC_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body,signal:ctrl.signal});
+  }catch(e){
+    // fallback: GET with truncated value for small data
+    try{
+      const val=encodeURIComponent(JSON.stringify(v)).slice(0,1500);
+      await fetch(`${SYNC_URL}?action=set&key=${encodeURIComponent(k)}&value=${val}`,{mode:"no-cors",signal:AbortSignal.timeout(5000)});
+    }catch{}
+  }finally{clearTimeout(tid);}
+}
+
 async function pushAllToCloud(){
   const btn=document.getElementById("push-cloud-btn");
   if(btn){btn.textContent="☁️ שולח...";btn.disabled=true;}
@@ -185,11 +200,7 @@ async function pushAllToCloud(){
     {k:"bgt_debts",v:debts},
   ];
   for(const{k,v} of keys){
-    try{
-      const val=encodeURIComponent(JSON.stringify(v));
-      const ky=encodeURIComponent(k);
-      await fetch(`${SYNC_URL}?action=set&key=${ky}&value=${val}`,{mode:"no-cors"});
-    }catch(e){console.warn("push failed",k,e);}
+    await pushKey(k,v);
   }
   if(btn){btn.textContent="✅ נשלח!";setTimeout(()=>{btn.textContent="☁️ דחוף לענן";btn.disabled=false;},2000);}
 }
