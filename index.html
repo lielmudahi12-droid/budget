@@ -207,11 +207,8 @@ function syncPush(key,value){
   _sTimer=setTimeout(async()=>{
     for(const[k,v]of Object.entries(_sQ)){
       try{
-        const body=JSON.stringify({key:k,value:JSON.stringify(v)});
-        const ctrl=new AbortController();
-        const tid=setTimeout(()=>ctrl.abort(),8000);
-        await fetch(SYNC_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body,signal:ctrl.signal});
-        clearTimeout(tid);
+        const val=encodeURIComponent(JSON.stringify(v));
+        await fetch(`${SYNC_URL}?action=set&key=${encodeURIComponent(k)}&value=${val}`,{mode:"no-cors",signal:AbortSignal.timeout(6000)});
       }catch(e){console.warn("syncPush failed",k,e);}
       delete _sQ[k];
     }
@@ -673,6 +670,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   if(apiKey)document.getElementById('apikey-input').value=apiKey;
   restoreChatHistory();
   syncAll();
+  setInterval(syncAll, 30000);
   initNotifUI();
   checkInAppReminder();
   const{cash,bank,bit}=getBalances();
