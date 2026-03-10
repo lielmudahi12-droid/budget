@@ -145,7 +145,7 @@ function syncPush(key,value){
   _sQ[key]=value;clearTimeout(_sTimer);
   _sTimer=setTimeout(async()=>{
     for(const[k,v]of Object.entries(_sQ)){
-      try{const body2=JSON.stringify({key:k,value:JSON.stringify(v)});const ctrl2=new AbortController();const tid2=setTimeout(()=>ctrl2.abort(),8000);await fetch(SYNC_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:body2,signal:ctrl2.signal});clearTimeout(tid2);}catch{}
+      try{const val2=encodeURIComponent(JSON.stringify(v));await fetch(`${SYNC_URL}?action=set&key=${encodeURIComponent(k)}&value=${val2}`,{mode:"no-cors",signal:AbortSignal.timeout(6000)});}catch{}
       delete _sQ[k];
     }
   },2500);
@@ -175,18 +175,10 @@ function mergeTxnsByMonth(remote,local){
 
 
 async function pushKey(k,v){
-  const body=JSON.stringify({key:k,value:JSON.stringify(v)});
-  const ctrl=new AbortController();
-  const tid=setTimeout(()=>ctrl.abort(),8000);
   try{
-    await fetch(SYNC_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body,signal:ctrl.signal});
-  }catch(e){
-    // fallback: GET with truncated value for small data
-    try{
-      const val=encodeURIComponent(JSON.stringify(v)).slice(0,1500);
-      await fetch(`${SYNC_URL}?action=set&key=${encodeURIComponent(k)}&value=${val}`,{mode:"no-cors",signal:AbortSignal.timeout(5000)});
-    }catch{}
-  }finally{clearTimeout(tid);}
+    const val=encodeURIComponent(JSON.stringify(v));
+    await fetch(`${SYNC_URL}?action=set&key=${encodeURIComponent(k)}&value=${val}`,{mode:"no-cors",signal:AbortSignal.timeout(6000)});
+  }catch(e){console.warn("pushKey failed",k);}
 }
 
 async function pushAllToCloud(){
