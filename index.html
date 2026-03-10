@@ -207,9 +207,11 @@ function syncPush(key,value){
   _sTimer=setTimeout(async()=>{
     for(const[k,v]of Object.entries(_sQ)){
       try{
-        const val=encodeURIComponent(JSON.stringify(v));
-        const ky=encodeURIComponent(k);
-        await fetch(`${SYNC_URL}?action=set&key=${ky}&value=${val}`,{mode:"no-cors"});
+        const body=JSON.stringify({key:k,value:JSON.stringify(v)});
+        const ctrl=new AbortController();
+        const tid=setTimeout(()=>ctrl.abort(),8000);
+        await fetch(SYNC_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body,signal:ctrl.signal});
+        clearTimeout(tid);
       }catch(e){console.warn("syncPush failed",k,e);}
       delete _sQ[k];
     }
