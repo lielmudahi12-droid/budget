@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#FFD700">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="בוט תקציב ⚽">
 <meta name="theme-color" content="#0A0A14">
@@ -95,6 +97,7 @@
       <button class="tab active" data-view="chat" onclick="switchView('chat')">💬</button>
       <button class="tab" data-view="summary" onclick="switchView('summary')">📊</button>
       <button class="tab" data-view="install" onclick="switchView('install')">📲</button>
+      <button class="tab" data-view="notif" onclick="switchView('notif')">🔔</button>
       <button class="tab" onclick="clearHistory()" title="נקה היסטוריה">🗑️</button>
       <button class="tab" onclick="syncAll()" title="סנכרן">🔄</button>
       <a href="dashboard.html" class="tab" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">🖥️</a>
@@ -150,8 +153,51 @@
   </div>
 </div>
 
+<div id="notif-view" class="view" style="flex-direction:column;">
+  <div style="padding:16px 14px;overflow-y:auto;">
+    <div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:4px;">🔔 התראות יומיות</div>
+    <div style="font-size:12px;color:#666;margin-bottom:16px;">תזכורת יומית לרשום את ההוצאות שלך</div>
+
+    <!-- In-app reminder toggle -->
+    <div class="icard" style="margin-bottom:12px;">
+      <div class="icard-title" style="color:#55EFC4;margin-bottom:10px;">💬 תזכורת בתוך האפליקציה</div>
+      <div style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.6;">כשתפתח את האפליקציה אחרי השעה שתבחר, הבוט ישאל אם רשמת את ההוצאות של היום.</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="font-size:12px;color:#aaa;">שעת תזכורת:</span>
+        <input type="time" id="notif-time-input" value="21:00"
+          style="background:#0A0A14;border:1px solid #ffffff18;border-radius:8px;color:#FFD700;padding:6px 10px;font-size:14px;font-family:Heebo,sans-serif;outline:none;direction:ltr;">
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button id="notif-toggle-btn" onclick="toggleInAppNotif()"
+          style="flex:1;padding:10px;border-radius:10px;border:none;font-family:Heebo,sans-serif;font-weight:700;font-size:13px;cursor:pointer;background:#55EFC4;color:#000;">
+          ✅ פעיל
+        </button>
+        <button onclick="saveNotifTime()" style="flex:1;padding:10px;border-radius:10px;border:none;font-family:Heebo,sans-serif;font-weight:700;font-size:13px;cursor:pointer;background:#FFD700;color:#000;">
+          שמור שעה 💾
+        </button>
+      </div>
+      <div id="notif-status" style="font-size:11px;color:#55EFC4;margin-top:8px;text-align:center;"></div>
+    </div>
+
+    <!-- PWA push notifications -->
+    <div class="icard">
+      <div class="icard-title" style="color:#FFD700;margin-bottom:10px;">📲 התראה גם כשהאפליקציה סגורה</div>
+      <div style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.6;">
+        דורש התקנת האפליקציה <strong style="color:#FFD700;">כ-PWA</strong> (הוסף למסך הבית מ-📲).<br>
+        לאחר ההתקנה, לחץ "אשר התראות" ותקבל התראה יומית בשעה שבחרת.
+      </div>
+      <button onclick="requestPushPermission()" id="push-btn"
+        style="width:100%;padding:11px;border-radius:10px;border:none;font-family:Heebo,sans-serif;font-weight:700;font-size:13px;cursor:pointer;background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;">
+        🔔 אשר התראות
+      </button>
+      <div id="push-status" style="font-size:11px;color:#888;margin-top:8px;text-align:center;"></div>
+      <div style="font-size:10px;color:#444;margin-top:8px;text-align:center;">⚠️ iOS 16.4+ בלבד | אנדרואיד Chrome תמיד עובד</div>
+    </div>
+  </div>
+</div>
+
 <script>
-const LS={wallet:"bgt_wallet",txns:"bgt_txns",income:"bgt_income",apikey:"bgt_apikey",transfers:"bgt_transfers",chatHistory:"bgt_chat_history",debts:"bgt_debts"};
+const LS={wallet:"bgt_wallet",txns:"bgt_txns",income:"bgt_income",apikey:"bgt_apikey",transfers:"bgt_transfers",chatHistory:"bgt_chat_history",debts:"bgt_debts",notifTime:"bgt_notif_time",notifEnabled:"bgt_notif_enabled"};
 const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}};
 const SYNC_URL="https://script.google.com/macros/s/AKfycbxsVKlcH7iGj4gXmpc6o-bAt_zLZ-WOO_AGx-im0CBCcU_nkZ-HEAcMyvzt8YC793ck/exec";
 
@@ -160,7 +206,7 @@ function syncPush(key,value){
   _sQ[key]=value;clearTimeout(_sTimer);
   _sTimer=setTimeout(async()=>{
     for(const[k,v]of Object.entries(_sQ)){
-      try{await fetch(SYNC_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:k,value:JSON.stringify(v)})});}catch{}
+      try{await fetch(SYNC_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({key:k,value:JSON.stringify(v)})});}catch(e){console.warn("syncPush failed",k,e);}
       delete _sQ[k];
     }
   },2500);
@@ -503,19 +549,129 @@ function renderSummary(){
 function switchView(v){
   document.querySelectorAll(".view").forEach(el=>{el.classList.remove("active");el.style.display="none";});
   document.querySelectorAll(".tab[data-view]").forEach(el=>el.classList.remove("active"));
-  const map={chat:"chat-view",summary:"summary-view",install:"install-view"};
+  const map={chat:"chat-view",summary:"summary-view",install:"install-view",notif:"notif-view"};
   document.getElementById(map[v]).classList.add("active");
   document.getElementById(map[v]).style.display="flex";
   document.querySelector('.tab[data-view="'+v+'"]')?.classList.add("active");
   if(v==="summary")renderSummary();
 }
 
+
+// ── NOTIFICATIONS ──
+let _notifEnabled=lsGet(LS.notifEnabled,true);
+let _notifTime=lsGet(LS.notifTime,"21:00");
+
+function initNotifUI(){
+  const inp=document.getElementById("notif-time-input");
+  if(inp)inp.value=_notifTime;
+  updateNotifBtn();
+}
+
+function updateNotifBtn(){
+  const btn=document.getElementById("notif-toggle-btn");
+  if(!btn)return;
+  if(_notifEnabled){
+    btn.textContent="✅ פעיל — לחץ לכיבוי";
+    btn.style.background="#55EFC4";btn.style.color="#000";
+  } else {
+    btn.textContent="❌ כבוי — לחץ להפעלה";
+    btn.style.background="#ffffff18";btn.style.color="#888";
+  }
+}
+
+function toggleInAppNotif(){
+  _notifEnabled=!_notifEnabled;
+  localStorage.setItem(LS.notifEnabled,JSON.stringify(_notifEnabled));
+  updateNotifBtn();
+  const st=document.getElementById("notif-status");
+  if(st)st.textContent=_notifEnabled?"✅ תזכורת פעילה":"❌ תזכורת כבויה";
+}
+
+function saveNotifTime(){
+  const inp=document.getElementById("notif-time-input");
+  if(!inp)return;
+  _notifTime=inp.value||"21:00";
+  localStorage.setItem(LS.notifTime,JSON.stringify(_notifTime));
+  const st=document.getElementById("notif-status");
+  if(st)st.textContent="✅ שמור! תזכורת בשעה "+_notifTime;
+  // reschedule if SW active
+  scheduleDailyNotif();
+}
+
+function checkInAppReminder(){
+  if(!_notifEnabled)return;
+  const [hh,mm]=_notifTime.split(":").map(Number);
+  const now=new Date();
+  const nowMins=now.getHours()*60+now.getMinutes();
+  const targetMins=hh*60+mm;
+  if(nowMins<targetMins)return; // too early
+  // check if we already reminded today
+  const todayKey="bgt_reminded_"+now.toISOString().slice(0,10);
+  if(localStorage.getItem(todayKey))return;
+  // check if user added any expense today
+  const todayStr2=now.toISOString().slice(0,10);
+  const monthKey2=now.toLocaleString("he-IL",{month:"long",year:"numeric"}).replace(/ /g," ");
+  const allT=lsGet(LS.txns,{});
+  const hasToday=Object.values(allT).flat().some(t=>t.date===todayStr2);
+  if(hasToday)return; // already logged something today
+  // show reminder
+  localStorage.setItem(todayKey,"1");
+  setTimeout(()=>{
+    addBotMsg("היי! 👋 עוד לא ראיתי הוצאות מהיום.
+רשמת הכל? 📝
+
+אם קנית משהו — כתוב לי ואני אוסיף! 💸");
+  },1500);
+}
+
+async function requestPushPermission(){
+  const st=document.getElementById("push-status");
+  const btn=document.getElementById("push-btn");
+  if(!("Notification" in window)){
+    if(st)st.textContent="❌ הדפדפן לא תומך בהתראות";return;
+  }
+  if(!("serviceWorker" in navigator)){
+    if(st)st.textContent="❌ התקן כ-PWA תחילה (הוסף למסך הבית)";return;
+  }
+  const perm=await Notification.requestPermission();
+  if(perm==="granted"){
+    if(st){st.textContent="✅ אושר! תתחיל לקבל התראות יומיות.";st.style.color="#55EFC4";}
+    if(btn){btn.textContent="✅ התראות מאושרות";btn.style.background="#55EFC420";btn.style.color="#55EFC4";}
+    scheduleDailyNotif();
+  } else {
+    if(st){st.textContent="❌ נדחה — שנה בהגדרות הדפדפן";st.style.color="#FF6B6B";}
+  }
+}
+
+function scheduleDailyNotif(){
+  if(!("serviceWorker" in navigator)||Notification.permission!=="granted")return;
+  navigator.serviceWorker.ready.then(reg=>{
+    const [hh,mm]=_notifTime.split(":").map(Number);
+    const now=new Date();
+    const next=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm,0,0);
+    if(next<=now)next.setDate(next.getDate()+1);
+    const msUntil=next-now;
+    // store schedule in SW
+    reg.active?.postMessage({type:"SCHEDULE_NOTIF",msUntil,time:_notifTime});
+  }).catch(()=>{});
+}
+
 document.addEventListener("DOMContentLoaded",()=>{
   if(apiKey)document.getElementById('apikey-input').value=apiKey;
   restoreChatHistory();
   syncAll();
+  initNotifUI();
+  checkInAppReminder();
   const{cash,bank,bit}=getBalances();
   addBotMsg("היי! 👋 אני הבוט של התקציב שלך.\n\n💵 מזומן: "+cash+"₪  🏦 בנק: "+bank+"₪  🔵 ביט: "+bit+"₪\n\nמה אני יכול לעשות:\n• לרשום הוצאה / הכנסה\n• לרשום העברה בין ארנקים\n• לנהל חובות (מי חייב לי)\n• לענות על שאלות תקציב"+(apiKey?"\n\n✅ Groq מוכן!":"\n\n⚙️ כנס ל-📲 להגדיר מפתח מ-console.groq.com"));
+  // Register Service Worker for PWA push
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.register("sw.js").then(reg=>{
+      console.log("SW registered");
+      // If notifs already granted, schedule
+      if(Notification.permission==="granted") scheduleDailyNotif();
+    }).catch(()=>{});
+  }
   document.getElementById("msginput").addEventListener("input",(e)=>{
     document.getElementById("sendbtn").disabled=!e.target.value.trim();
   });
