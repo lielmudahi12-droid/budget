@@ -50,7 +50,6 @@
   .alert-box{background:#1A0808;border:1px solid #FF6B6B30;border-radius:14px;padding:12px 16px;margin-bottom:12px;position:relative;}
   .transfer-card{background:#0E1F0E;border:1px solid #55EFC425;border-radius:13px;padding:14px;margin-bottom:12px;}
   select.inp{cursor:pointer;}
-  canvas{max-width:100%;}
   .pay-toggle{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
   .pay-opt{padding:9px;border-radius:10px;border:1px solid #ffffff12;background:transparent;color:#555;cursor:pointer;font-size:12px;font-family:'Heebo',sans-serif;font-weight:600;transition:.15s;}
 
@@ -354,6 +353,7 @@ function renderAll(){
   }
 
   let viewHtml="";
+  let daysInMonth=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
 
   if(currentView==="dashboard"){
     viewHtml+=`<div class="grid4">
@@ -365,7 +365,6 @@ function renderAll(){
         </div>`).join("")}
     </div>`;
     // build daily data for current month
-    const daysInMonth=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
     const dailySpend=Array(daysInMonth).fill(0);
     const dailyRunning=[];
     let runningTotal=0;
@@ -676,10 +675,14 @@ function renderAll(){
   Object.entries(_savedBtnText).forEach(([id,txt])=>{const el=document.getElementById(id);if(el){el.textContent=txt;el.classList.remove('placeholder');}});
 
   if(currentView==="dashboard"){
-    try{
     const pieCtx=document.getElementById("pie-chart")?.getContext("2d");
-    if(pieCtx&&Object.keys(cats).length>0){
-      if(pieChart)pieChart.destroy();
+    if(pieCtx){
+      if(pieChart){pieChart.destroy();pieChart=null;}
+      if(Object.keys(cats).length===0){
+        pieCtx.clearRect(0,0,pieCtx.canvas.width,pieCtx.canvas.height);
+        pieCtx.fillStyle="#333";pieCtx.font="13px Heebo,sans-serif";pieCtx.textAlign="center";pieCtx.textBaseline="middle";
+        pieCtx.fillText("אין נתונים עדיין",pieCtx.canvas.width/2,pieCtx.canvas.height/2);
+      } else {
       pieChart=new Chart(pieCtx,{
         type:"doughnut",
         data:{
@@ -695,7 +698,7 @@ function renderAll(){
               const val=data.datasets[0].data[i];
               const pct=Math.round((val/total)*100);
               if(pct<5)return;
-              const{x,y}=arc.getCenterPoint();
+              const{x,y}=arc.tooltipPosition();
               ctx.save();
               ctx.font="bold 11px Heebo,sans-serif";
               ctx.fillStyle="#fff";
@@ -710,6 +713,7 @@ function renderAll(){
         }],
         options:{animation:_chartsFirst,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}₪ (${Math.round(ctx.parsed/Object.values(cats).reduce((a,b)=>a+b,0)*100)}%)`}}},cutout:"60%"}
       });
+      } // end else
     }
     const barCtx=document.getElementById("bar-chart")?.getContext("2d");
     if(barCtx){
@@ -720,7 +724,6 @@ function renderAll(){
       barChart=new Chart(barCtx,{type:"bar",data:{labels:allMonthsAndYear.map(m=>m.split(" ")[0]),datasets},options:{animation:_chartsFirst,responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label.split(" ").slice(1).join(" ")}: ${Math.round(ctx.parsed.y)}₪`}}},scales:{x:{stacked:true,ticks:{color:"#555",font:{size:9}},grid:{display:false}},y:{stacked:true,ticks:{color:"#444",font:{size:9}},grid:{color:"#ffffff07"}}}}});
     _chartsFirst=false;
     }
-    }catch(e){console.warn("pie/bar chart error:",e);}
 
     // Charts rendered synchronously after innerHTML is stable
     const _cur=cur,_totalSpent=totalSpent,_daysInMonth=daysInMonth;
