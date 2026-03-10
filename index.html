@@ -272,7 +272,7 @@ const W_NAMES={cash:"מזומן",bank:"בנק",bit:"ביט"};
 
 function nowMonth(){const d=new Date();return["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"][d.getMonth()]+" "+d.getFullYear();}
 function monthKey(s){const d=new Date(s);return["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"][d.getMonth()]+" "+d.getFullYear();}
-function todayStr(){return new Date().toISOString().slice(0,10);}
+function todayStr(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function nowTime(){return new Date().toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});}
 function scrollBottom(){const m=document.getElementById("messages");m.scrollTop=m.scrollHeight;}
 
@@ -615,7 +615,7 @@ function checkInAppReminder(){
   const todayKey="bgt_reminded_"+now.toISOString().slice(0,10);
   if(localStorage.getItem(todayKey))return;
   // check if user added any expense today
-  const todayStr2=now.toISOString().slice(0,10);
+  const todayStr2=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
   const monthKey2=now.toLocaleString("he-IL",{month:"long",year:"numeric"}).replace(/ /g," ");
   const allT=lsGet(LS.txns,{});
   const hasToday=Object.values(allT).flat().some(t=>t.date===todayStr2);
