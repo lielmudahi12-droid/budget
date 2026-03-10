@@ -419,7 +419,8 @@ async function send(){
   const catStr=Object.entries(cats).map(([k,v])=>k+":"+v).join(" ")||"none";
   
   const catTxnsStr=Object.keys(cats).map(k=>{const list=currentTxns.filter(t=>t.category===k).map(t=>t.desc+"("+t.amount+String.fromCharCode(8362)+" "+t.date+")").join(",");return k+":["+list+"]";}).join(" ");
-  const sys="Budget bot. Hebrew ONLY. Max 60 words. For category breakdown list each item with bullet. Emojis. Transaction confirmed->say: רשמתי 👍 + summary.\nS:cash="+cashBal+" bank="+bankBal+" bit="+bitBal+" debt="+totalDebt+" spent="+totalSpent+"\nC:"+catStr+"\nTXNS:"+catTxnsStr+"\nP:"+pending+"\nR:no_type->ask_type|expense->add_expense|income->add_income|transfer->transfer|owes->add_debt|paid->pay_debt\nT:cash|credit|bit K:food|transport|hobbies|social|beitar|savings|alcohol|other\nJSON:{reply:'',action:'',transaction:{desc:'',amount:0,category:'',type:'',date:'YYYY-MM-DD',is_income:false},transfer:{from:'',to:'',amount:0},debt:{person:'',amount:0,desc:''}}";
+  const todayISO=todayStr();
+  const sys="You are a Hebrew budget bot. Respond ONLY with valid JSON — no text before or after, no markdown, no backticks. Hebrew in reply field only. Max 60 words. Today="+todayISO+"\nS:cash="+cashBal+" bank="+bankBal+" bit="+bitBal+" debt="+totalDebt+" spent="+totalSpent+"\nC:"+catStr+"\nTXNS:"+catTxnsStr+"\nP:"+pending+"\nR:no_type->ask_type|expense->add_expense|income->add_income|transfer->transfer|owes->add_debt|paid->pay_debt\nT:cash|credit|bit K:food|transport|hobbies|social|beitar|savings|alcohol|other\nReturn ONLY this JSON:{\"reply\":\"\",\"action\":\"\",\"transaction\":{\"desc\":\"\",\"amount\":0,\"category\":\"\",\"type\":\"\",\"date\":\""+todayISO+"\",\"is_income\":false},\"transfer\":{\"from\":\"\",\"to\":\"\",\"amount\":0},\"debt\":{\"person\":\"\",\"amount\":0,\"desc\":\"\"}}";
 
   const msgEls=[...document.querySelectorAll(".bubble-wrap")].slice(-4);
   const hist=msgEls.map(w=>(w.classList.contains("user")?"U:":"A:")+w.querySelector(".bubble")?.childNodes[0]?.textContent?.trim()).filter(Boolean).join("\n");
@@ -487,6 +488,7 @@ async function send(){
     }
 
     addBotMsg(p.reply||"הבנתי! ✓",chip);
+    pushAll();
     saveChatHistory();
   }catch(e){te.remove();addBotMsg("אופס, שגיאת רשת 😅 בדוק חיבור ונסה שוב.");}
   loading=false;
@@ -657,6 +659,14 @@ function scheduleDailyNotif(){
   }).catch(()=>{});
 }
 
+
+function pushAll(){
+  syncPush(LS.txns,txns);
+  syncPush(LS.wallet,wallet);
+  syncPush(LS.income,income);
+  syncPush(LS.transfers,transfers);
+  syncPush(LS.debts,debts);
+}
 document.addEventListener("DOMContentLoaded",()=>{
   if(apiKey)document.getElementById('apikey-input').value=apiKey;
   restoreChatHistory();
