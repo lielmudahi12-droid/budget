@@ -144,7 +144,7 @@ function syncPush(key,value){
   _sQ[key]=value;clearTimeout(_sTimer);
   _sTimer=setTimeout(async()=>{
     for(const[k,v]of Object.entries(_sQ)){
-      try{await fetch(SYNC_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:k,value:JSON.stringify(v)})});}catch{}
+      try{await fetch(SYNC_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({key:k,value:JSON.stringify(v)})});}catch{}
       delete _sQ[k];
     }
   },2500);
