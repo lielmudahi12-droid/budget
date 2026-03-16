@@ -99,7 +99,6 @@
         <button class="nav-btn" onclick="setView('add')" id="nav-add">➕ הוסף</button>
         <button class="nav-btn" onclick="setView('debts')" id="nav-debts">💳 חובות</button>
         <button class="nav-btn" onclick="syncAll()">🔄 סנכרן</button>
-        <button class="nav-btn" onclick="pushAllToCloud()" id="push-cloud-btn">☁️ דחוף לענן</button>
         <a href="index.html" class="nav-btn" style="text-decoration:none;background:#FFD70015;border-color:#FFD700;color:#FFD700;">💬 חזור לצ'אט</a>
       </div>
     </div>
@@ -173,29 +172,6 @@ function mergeTxnsByMonth(remote,local){
   return merged;
 }
 
-
-async function pushKey(k,v){
-  try{
-    const val=encodeURIComponent(JSON.stringify(v));
-    await fetch(`${SYNC_URL}?action=set&key=${encodeURIComponent(k)}&value=${val}`,{mode:"no-cors",signal:AbortSignal.timeout(6000)});
-  }catch(e){console.warn("pushKey failed",k);}
-}
-
-async function pushAllToCloud(){
-  const btn=document.getElementById("push-cloud-btn");
-  if(btn){btn.textContent="☁️ שולח...";btn.disabled=true;}
-  const keys=[
-    {k:"bgt_txns",v:allTxns},
-    {k:"bgt_wallet",v:currentWallet},
-    {k:"bgt_income",v:allIncome},
-    {k:"bgt_transfers",v:transfers},
-    {k:"bgt_debts",v:debts},
-  ];
-  for(const{k,v} of keys){
-    await pushKey(k,v);
-  }
-  if(btn){btn.textContent="✅ נשלח!";setTimeout(()=>{btn.textContent="☁️ דחוף לענן";btn.disabled=false;},2000);}
-}
 
 async function syncAll(){
   try{
