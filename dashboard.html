@@ -1,59 +1,6 @@
 <!DOC
 
-<div id="notif-view" style="display:none;padding:20px 16px;max-width:960px;margin:0 auto;">
-  <div style="max-width:520px;margin:0 auto;padding:20px 16px;">
-    <div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:4px;">🔔 התראות יומיות</div>
-    <div style="font-size:12px;color:#666;margin-bottom:20px;">התראה לטלפון גם כשהדפדפן סגור — דרך ntfy.sh</div>
 
-    <div style="background:#111230;border:1px solid #ffffff12;border-radius:14px;padding:16px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:12px;">📲 שלב 1 — התקן ntfy בטלפון</div>
-      <div style="font-size:12px;color:#aaa;line-height:1.8;">
-        • אנדרואיד: <strong style="color:#fff;">חפש "ntfy" ב-Play Store</strong><br>
-        • אייפון: <strong style="color:#fff;">חפש "ntfy" ב-App Store</strong><br>
-        • או פתח <strong style="color:#4ECDC4;">ntfy.sh</strong> בדפדפן הטלפון
-      </div>
-    </div>
-
-    <div style="background:#111230;border:1px solid #ffffff12;border-radius:14px;padding:16px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:12px;">🔑 שלב 2 — בחר Topic</div>
-      <div style="font-size:12px;color:#aaa;margin-bottom:10px;line-height:1.6;">
-        Topic הוא "ערוץ" פרטי שלך. בחר שם אקראי שרק אתה יודע.<br>
-        <span style="color:#888;">לדוגמה: liel-budget-7743</span>
-      </div>
-      <input id="ntfy-topic-input" type="text" placeholder="לדוגמה: liel-budget-7743"
-        style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid #ffffff18;background:#0A0A14;color:#FFD700;font-size:13px;font-family:Heebo,sans-serif;outline:none;margin-bottom:8px;direction:ltr;">
-      <button onclick="saveNtfyTopic()"
-        style="width:100%;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;font-weight:800;font-size:13px;cursor:pointer;font-family:Heebo,sans-serif;">
-        שמור Topic ✓
-      </button>
-      <div id="ntfy-status" style="font-size:11px;color:#55EFC4;margin-top:8px;text-align:center;"></div>
-    </div>
-
-    <div style="background:#111230;border:1px solid #ffffff12;border-radius:14px;padding:16px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:12px;">⏰ שלב 3 — הגדר טריגר ב-Apps Script</div>
-      <div style="font-size:12px;color:#aaa;line-height:1.8;">
-        1. פתח <strong style="color:#fff;">script.google.com</strong><br>
-        2. לחץ <strong style="color:#fff;">Triggers (שעון)</strong> בסרגל הצד<br>
-        3. לחץ <strong style="color:#4ECDC4;">+ Add Trigger</strong><br>
-        4. פונקציה: <strong style="color:#FFD700;">sendDailyReminder</strong><br>
-        5. Event source: <strong style="color:#fff;">Time-driven</strong><br>
-        6. Type: <strong style="color:#fff;">Day timer</strong><br>
-        7. בחר שעה — לדוגמה <strong style="color:#FFD700;">9pm–10pm</strong><br>
-        8. לחץ <strong style="color:#4ECDC4;">Save</strong>
-      </div>
-    </div>
-
-    <div style="background:#111230;border:1px solid #ffffff12;border-radius:14px;padding:16px;">
-      <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:12px;">📱 שלב 4 — הירשם ל-Topic בטלפון</div>
-      <div style="font-size:12px;color:#aaa;line-height:1.8;">
-        1. פתח את אפליקציית ntfy<br>
-        2. לחץ <strong style="color:#fff;">+</strong> או Subscribe<br>
-        3. הכנס את ה-Topic שבחרת<br>
-        4. <strong style="color:#55EFC4;">✅ סיימת! תקבל התראה כל יום בשעה שבחרת</strong>
-      </div>
-    </div>
-  </div>
-</div>
 </div></div>TYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -355,21 +302,7 @@ function setView(v){
   currentView=v;
   document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
   document.getElementById("nav-"+v)?.classList.add("active");
-  // show/hide notif view
-  const notifDiv=document.getElementById("notif-view");
-  const mainDiv=document.getElementById("main-content");
-  if(v==="notif"){
-    if(notifDiv)notifDiv.style.display="block";
-    if(mainDiv)mainDiv.style.display="none";
-    // pre-fill topic if saved
-    const saved=lsGet("bgt_ntfy_topic","");
-    const inp=document.getElementById("ntfy-topic-input");
-    if(inp&&saved)inp.value=saved;
-  } else {
-    if(notifDiv)notifDiv.style.display="none";
-    if(mainDiv)mainDiv.style.display="block";
-    renderAll();
-  }
+  renderAll();
 }
 
 function setMonth(m){
@@ -388,6 +321,25 @@ function deleteMonth(m,e){
     activeMonth=months.length>0?months[months.length-1]:nowMonth();
   }
   renderAll();
+}
+
+
+function saveNtfyTopic(){
+  const topic=document.getElementById("ntfy-topic-input")?.value.trim();
+  if(!topic){alert("הכנס topic");return;}
+  lsSet("bgt_ntfy_topic",topic);
+  syncPush("bgt_ntfy_topic",topic);
+  const st=document.getElementById("ntfy-status");
+  if(st){st.textContent="✅ נשמר! topic: "+topic;}
+  // Send test notification
+  fetch("https://ntfy.sh/"+topic,{
+    method:"POST",
+    headers:{"Title":"💸 בוט התקציב","Content-Type":"text/plain;charset=utf-8"},
+    body:"✅ החיבור עובד! תקבל כאן התראות יומיות."
+  }).then(()=>{
+    const st2=document.getElementById("ntfy-status");
+    if(st2)st2.textContent="✅ נשמר! התראת בדיקה נשלחה לטלפון 🔔";
+  }).catch(()=>{});
 }
 
 function renderAll(){
@@ -428,6 +380,45 @@ function renderAll(){
   let viewHtml="";
   let daysInMonth=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
 
+  if(currentView==="notif"){
+    const _ntfyTopic=lsGet("bgt_ntfy_topic","");
+    content.innerHTML=`<div style="max-width:520px;margin:0 auto;padding:4px 0;">
+      <div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:4px;">🔔 התראות יומיות</div>
+      <div style="font-size:12px;color:#666;margin-bottom:20px;">התראות דרך ntfy — עובד גם כשהדפדפן סגור</div>
+      <div style="background:#111230;border:1px solid #ffffff12;border-radius:14px;padding:16px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:10px;">📲 שלב 1 — התקן ntfy</div>
+        <div style="font-size:12px;color:#aaa;line-height:1.8;">• אנדרואיד: <strong>Play Store</strong><br>• אייפון: <strong>App Store</strong></div>
+      </div>
+      <div style="background:#111230;border:1px solid #ffffff12;border-radius:14px;padding:16px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:10px;">🔑 שלב 2 — בחר Topic</div>
+        <div style="font-size:12px;color:#aaa;margin-bottom:10px;">שם אקראי שרק אתה יודע, לדוגמה: liel-budget-7743</div>
+        <input id="ntfy-topic-input" type="text" value="${_ntfyTopic}" placeholder="liel-budget-7743"
+          style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid #ffffff18;background:#0A0A14;color:#FFD700;font-size:13px;font-family:Heebo,sans-serif;outline:none;margin-bottom:8px;direction:ltr;">
+        <button onclick="saveNtfyTopic()" style="width:100%;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;font-weight:800;font-size:13px;cursor:pointer;font-family:Heebo,sans-serif;">שמור Topic ✓</button>
+        <div id="ntfy-status" style="font-size:11px;color:#55EFC4;margin-top:8px;text-align:center;"></div>
+      </div>
+      <div style="background:#111230;border:1px solid #ffffff12;border-radius:14px;padding:16px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:10px;">⏰ שלב 3 — הגדר טריגר ב-Apps Script</div>
+        <div style="font-size:12px;color:#aaa;line-height:1.8;">
+          1. פתח <strong style="color:#fff;">script.google.com</strong><br>
+          2. לחץ <strong style="color:#fff;">Triggers</strong> בסרגל הצד<br>
+          3. לחץ <strong style="color:#4ECDC4;">+ Add Trigger</strong><br>
+          4. פונקציה: <strong style="color:#FFD700;">sendDailyReminder</strong><br>
+          5. מקור: <strong style="color:#fff;">Time-driven → Day timer</strong><br>
+          6. בחר שעה — לדוגמה <strong style="color:#FFD700;">9pm–10pm</strong>
+        </div>
+      </div>
+      <div style="background:#111230;border:1px solid #ffffff12;border-radius:14px;padding:16px;">
+        <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:10px;">📱 שלב 4 — הירשם ב-ntfy בטלפון</div>
+        <div style="font-size:12px;color:#aaa;line-height:1.8;">
+          1. פתח ntfy → לחץ +<br>
+          2. הכנס את ה-Topic שבחרת<br>
+          3. <strong style="color:#55EFC4;">✅ סיימת!</strong>
+        </div>
+      </div>
+    </div>`;
+    return;
+  }
   if(currentView==="dashboard"){
     viewHtml+=`<div class="grid4">
       ${[{l:"סה״כ הוצאות",v:`${Math.round(totalSpent)}₪`,i:"💸",c:"#FF6B6B"},{l:"נחסך",v:`${Math.round(totalSaved)}₪`,i:"💰",c:"#55EFC4"},{l:"עסקאות",v:cur.length,i:"📝",c:"#A29BFE"},{l:"⚽ ביתר",v:`${cats.beitar||0}₪`,i:"🟡",c:"#FFD700"}].map(k=>`
