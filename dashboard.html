@@ -99,7 +99,6 @@
         <button class="nav-btn" onclick="setView('add')" id="nav-add">➕ הוסף</button>
         <button class="nav-btn" onclick="setView('debts')" id="nav-debts">💳 חובות</button>
         <button class="nav-btn" onclick="syncAll()">🔄 סנכרן</button>
-        <button class="nav-btn" onclick="pushAllToCloud()" id="push-cloud-btn">☁️ דחוף לענן</button>
         <button class="nav-btn" onclick="setView('notif')" id="nav-notif">🔔 התראות</button>
         <a href="index.html" class="nav-btn" style="text-decoration:none;background:#FFD70015;border-color:#FFD700;color:#FFD700;">💬 חזור לצ'אט</a>
       </div>
@@ -134,7 +133,7 @@
     </div>
   </div>
 
-<div id="notif-view" class="view" style="display:none;">
+<div id="notif-view" style="display:none;position:fixed;top:60px;left:0;right:0;bottom:0;overflow-y:auto;background:#0A0A14;z-index:10;">
   <div style="max-width:520px;margin:0 auto;padding:20px 16px;">
     <div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:4px;">🔔 התראות יומיות</div>
     <div style="font-size:12px;color:#666;margin-bottom:20px;">התראה לטלפון גם כשהדפדפן סגור — דרך ntfy.sh</div>
