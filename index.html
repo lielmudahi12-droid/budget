@@ -156,56 +156,42 @@
 <div id="notif-view" class="view" style="flex-direction:column;">
   <div style="padding:16px 14px;overflow-y:auto;">
     <div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:4px;">🔔 התראות יומיות</div>
-    <div style="font-size:12px;color:#666;margin-bottom:16px;">תזכורת יומית לרשום את ההוצאות שלך</div>
-
-    <!-- In-app reminder toggle -->
+    <div style="font-size:12px;color:#666;margin-bottom:16px;">התראות דרך ntfy — עובד גם כשהאפליקציה סגורה</div>
     <div class="icard" style="margin-bottom:12px;">
-      <div class="icard-title" style="color:#55EFC4;margin-bottom:10px;">💬 תזכורת בתוך האפליקציה</div>
-      <div style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.6;">כשתפתח את האפליקציה אחרי השעה שתבחר, הבוט ישאל אם רשמת את ההוצאות של היום.</div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-        <span style="font-size:12px;color:#aaa;">שעת תזכורת:</span>
+      <div class="icard-title" style="color:#FFD700;margin-bottom:10px;">📲 שלב 1 — התקן ntfy</div>
+      <div style="font-size:12px;color:#aaa;line-height:1.8;">
+        • אנדרואיד: <strong style="color:#fff;">חפש "ntfy" ב-Play Store</strong><br>
+        • אייפון: <strong style="color:#fff;">חפש "ntfy" ב-App Store</strong>
+      </div>
+    </div>
+    <div class="icard" style="margin-bottom:12px;">
+      <div class="icard-title" style="color:#FFD700;margin-bottom:10px;">🔑 שלב 2 — הירשם ל-Topic</div>
+      <div style="font-size:12px;color:#aaa;line-height:1.8;">
+        1. פתח ntfy → לחץ <strong style="color:#fff;">+</strong><br>
+        2. הכנס את ה-Topic שהגדרת בדשבורד<br>
+        3. לחץ <strong style="color:#55EFC4;">Subscribe</strong>
+      </div>
+    </div>
+    <div class="icard">
+      <div class="icard-title" style="color:#55EFC4;margin-bottom:8px;">💬 תזכורת בתוך האפליקציה</div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;">כשתפתח את האפליקציה אחרי השעה שתבחר, הבוט ישאל אם רשמת היום.</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <span style="font-size:12px;color:#aaa;">שעה:</span>
         <input type="time" id="notif-time-input" value="21:00"
           style="background:#0A0A14;border:1px solid #ffffff18;border-radius:8px;color:#FFD700;padding:6px 10px;font-size:14px;font-family:Heebo,sans-serif;outline:none;direction:ltr;">
       </div>
       <div style="display:flex;gap:8px;">
         <button id="notif-toggle-btn" onclick="toggleInAppNotif()"
-          style="flex:1;padding:10px;border-radius:10px;border:none;font-family:Heebo,sans-serif;font-weight:700;font-size:13px;cursor:pointer;background:#55EFC4;color:#000;">
-          ✅ פעיל
-        </button>
-        <button onclick="saveNotifTime()" style="flex:1;padding:10px;border-radius:10px;border:none;font-family:Heebo,sans-serif;font-weight:700;font-size:13px;cursor:pointer;background:#FFD700;color:#000;">
-          שמור שעה 💾
-        </button>
+          style="flex:1;padding:10px;border-radius:10px;border:none;font-family:Heebo,sans-serif;font-weight:700;font-size:13px;cursor:pointer;background:#55EFC4;color:#000;">✅ פעיל</button>
+        <button onclick="saveNotifTime()"
+          style="flex:1;padding:10px;border-radius:10px;border:none;font-family:Heebo,sans-serif;font-weight:700;font-size:13px;cursor:pointer;background:#FFD700;color:#000;">שמור 💾</button>
       </div>
       <div id="notif-status" style="font-size:11px;color:#55EFC4;margin-top:8px;text-align:center;"></div>
     </div>
-
-    <!-- PWA push notifications -->
-    <div class="icard">
-      <div class="icard-title" style="color:#FFD700;margin-bottom:10px;">📲 התראה גם כשהאפליקציה סגורה</div>
-      <div style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.6;">
-        שתי ההתראות (זו ושל למעלה) מגיעות באותה שעה שהגדרת.<br><br>
-        <strong style="color:#FFD700;">⚠️ חשוב לדעת:</strong> ההתראה הזו עובדת רק כש-<strong>Chrome פתוח ברקע</strong> בטלפון — לא חייב שהכרטיסייה תהיה פעילה, אבל Chrome לא יכול להיות סגור לגמרי.<br><br>
-        אם Chrome סגור — ההתראה לא תגיע. במקרה כזה <strong style="color:#55EFC4;">התזכורת בתוך האפליקציה</strong> (למעלה) תעבוד ברגע שתפתח אותה.
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-        <span style="font-size:12px;color:#aaa;">שעת התראה:</span>
-        <input type="time" id="push-time-input" value="21:00"
-          style="background:#0A0A14;border:1px solid #ffffff18;border-radius:8px;color:#FFD700;padding:6px 10px;font-size:14px;font-family:Heebo,sans-serif;outline:none;direction:ltr;">
-        <button onclick="savePushTime()" style="padding:7px 12px;border-radius:8px;border:none;font-family:Heebo,sans-serif;font-weight:700;font-size:12px;cursor:pointer;background:#FFD700;color:#000;">שמור 💾</button>
-      </div>
-      <div id="push-time-status" style="font-size:11px;color:#55EFC4;margin-bottom:8px;text-align:center;"></div>
-      <button onclick="requestPushPermission()" id="push-btn"
-        style="width:100%;padding:11px;border-radius:10px;border:none;font-family:Heebo,sans-serif;font-weight:700;font-size:13px;cursor:pointer;background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;">
-        🔔 אשר התראות
-      </button>
-      <div id="push-status" style="font-size:11px;color:#888;margin-top:8px;text-align:center;"></div>
-      <div style="font-size:10px;color:#444;margin-top:8px;text-align:center;">⚠️ iOS 16.4+ בלבד | אנדרואיד Chrome תמיד עובד</div>
-    </div>
   </div>
 </div>
-
 <script>
-const LS={wallet:"bgt_wallet",txns:"bgt_txns",income:"bgt_income",apikey:"bgt_apikey",transfers:"bgt_transfers",chatHistory:"bgt_chat_history",debts:"bgt_debts",notifTime:"bgt_notif_time",notifEnabled:"bgt_notif_enabled",pushTime:"bgt_push_time"};
+const LS={wallet:"bgt_wallet",txns:"bgt_txns",income:"bgt_income",apikey:"bgt_apikey",transfers:"bgt_transfers",chatHistory:"bgt_chat_history",debts:"bgt_debts",notifTime:"bgt_notif_time",notifEnabled:"bgt_notif_enabled",pushTime:"bgt_push_time",ntfyTopic:"bgt_ntfy_topic"};
 const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}};
 const SYNC_URL="https://script.google.com/macros/s/AKfycbxsVKlcH7iGj4gXmpc6o-bAt_zLZ-WOO_AGx-im0CBCcU_nkZ-HEAcMyvzt8YC793ck/exec";
 
@@ -687,12 +673,41 @@ function pushAll(){
   syncPush(LS.transfers,transfers);
   syncPush(LS.debts,debts);
 }
+
+function generateNtfyTopic(){
+  const rand=Math.random().toString(36).slice(2,8);
+  const inp=document.getElementById("ntfy-topic-input");
+  if(inp)inp.value="budget-"+rand;
+}
+
+function saveNtfyTopic(){
+  const inp=document.getElementById("ntfy-topic-input");
+  if(!inp||!inp.value.trim()){
+    const st=document.getElementById("ntfy-status");
+    if(st)st.textContent="❌ הכנס נושא תחילה";
+    return;
+  }
+  const topic=inp.value.trim();
+  localStorage.setItem(LS.ntfyTopic,JSON.stringify(topic));
+  // Push topic to Sheets so Apps Script can read it
+  syncPush(LS.ntfyTopic,topic);
+  const st=document.getElementById("ntfy-status");
+  if(st)st.textContent="✅ נשמר! נושא: "+topic+" — עכשיו הוסף טריגר ב-Apps Script";
+}
+
+function initNtfyUI(){
+  const saved=lsGet(LS.ntfyTopic,"");
+  const inp=document.getElementById("ntfy-topic-input");
+  if(inp&&saved)inp.value=saved;
+}
+
 document.addEventListener("DOMContentLoaded",()=>{
   if(apiKey)document.getElementById('apikey-input').value=apiKey;
   restoreChatHistory();
   syncAll();
   setInterval(syncAll, 30000);
   initNotifUI();
+  initNtfyUI();
   checkInAppReminder();
   const{cash,bank,bit}=getBalances();
   addBotMsg("היי! 👋 אני הבוט של התקציב שלך.\n\n💵 מזומן: "+cash+"₪  🏦 בנק: "+bank+"₪  🔵 ביט: "+bit+"₪\n\nמה אני יכול לעשות:\n• לרשום הוצאה / הכנסה\n• לרשום העברה בין ארנקים\n• לנהל חובות (מי חייב לי)\n• לענות על שאלות תקציב"+(apiKey?"\n\n✅ Groq מוכן!":"\n\n⚙️ כנס ל-📲 להגדיר מפתח מ-console.groq.com"));
