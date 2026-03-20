@@ -528,7 +528,7 @@ viewHtml+=`<div class="grid2">
           return '<div style="color:#55EFC4;font-size:13px;text-align:center;">✅ ההכנסה הצפויה נוספה אוטומטית!</div>';
         }
         return '<div style="display:grid;gap:9px;">'
-          +'<input class="inp" id="fi-desc" placeholder="תיאור (למשל: משכורת)" value="'+(fi?fi.desc||"":"")+'"><input class="inp" id="fi-amount" type="number" placeholder="סכום (₪)" value="'+(fi?fi.amount||"":"")+'"><input type="date" class="inp" id="fi-date" value="'+(fi?fi.date||"":"")
+          +'<input class="inp" id="fi-desc" placeholder="תיאור (למשל: משכורת)" value="'+(fi?fi.desc||"":"")+'"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><input class="inp" id="fi-hours" type="number" placeholder="שעות עבודה" value="'+(fi?fi.hours||'':'')+'"><input class="inp" id="fi-rate" type="number" placeholder="₪ לשעה" value="'+(fi?fi.rate||'':'')+'"></div><div style="font-size:13px;color:#FFD700;font-weight:700;text-align:center;padding:4px;">סכום: '+(fi&&fi.hours&&fi.rate?(fi.hours*fi.rate)+'₪':'---')+'</div>><input type="date" class="inp" id="fi-date" value="'+(fi?fi.date||"":"")
           +'" style="direction:ltr;">'
           +'<div class="pay-toggle">'
           +'${[["cash","💵 מזומן","#55EFC4"],["bank","🏦 בנק","#4ECDC4"],["bit","🔵 ביט","#6C9BFF"]].map(([t,l,cl])=>'
@@ -1221,11 +1221,13 @@ function checkDashboardReminder(){
 
 function saveFutureIncome(){
   const desc=document.getElementById("fi-desc")?.value||"משכורת";
-  const amount=parseFloat(document.getElementById("fi-amount")?.value||"0");
+  const hours=parseFloat(document.getElementById("fi-hours")?.value||"0");
+  const rate=parseFloat(document.getElementById("fi-rate")?.value||"0");
+  const amount=Math.round(hours*rate);
   const date=document.getElementById("fi-date")?.value||"";
   const wallet=window._fiWallet||"bank";
   if(!amount||!date){alert("הכנס סכום ותאריך");return;}
-  const fi={amount,date,desc,wallet};
+  const fi={amount,date,desc,wallet,hours,rate};
   localStorage.setItem("bgt_future_income",JSON.stringify(fi));
   futureIncome=fi;
   renderAll();
