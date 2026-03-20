@@ -132,8 +132,7 @@
       <button class="cal-cancel" onclick="closeCal()">ביטול</button>
     </div>
   </div>
-
-<div
+</div>
 
 <script>
 const LS={wallet:"bgt_wallet",txns:"bgt_txns",income:"bgt_income",transfers:"bgt_transfers",debts:"bgt_debts",budgets:"bgt_budgets"};
@@ -146,7 +145,7 @@ function syncPush(key,value){
   _sQ[key]=value;clearTimeout(_sTimer);
   _sTimer=setTimeout(async()=>{
     for(const[k,v]of Object.entries(_sQ)){
-      try{const val2=encodeURIComponent(JSON.stringify(v));await fetch(`${SYNC_URL}?action=set&key=${encodeURIComponent(k)}&value=${val2}`,{mode:"no-cors",signal:AbortSignal.timeout(6000)});}catch{}
+      try{const val2=encodeURIComponent(JSON.stringify(v));const _c2=new AbortController();setTimeout(()=>_c2.abort(),6000);await fetch(`${SYNC_URL}?action=set&key=${encodeURIComponent(k)}&value=${val2}`,{mode:"no-cors",signal:_c2.signal});}catch{}
       delete _sQ[k];
     }
   },2500);
@@ -173,7 +172,6 @@ function mergeTxnsByMonth(remote,local){
   }
   return merged;
 }
-
 
 async function syncAll(){
   try{
@@ -295,6 +293,27 @@ function byCat(txns){
   return r;
 }
 
+
+function saveNtfyTopic(){
+  const topic=document.getElementById("ntfy-topic-input")?.value.trim();
+  if(!topic){alert("הכנס topic");return;}
+  lsSet("bgt_ntfy_topic",topic);
+  syncPush("bgt_ntfy_topic",topic);
+  const st=document.getElementById("ntfy-status");
+  if(st)st.textContent="שולח התראת בדיקה...";
+  fetch("https://ntfy.sh/"+topic,{
+    method:"POST",
+    headers:{"Title":"\u05d1\u05d5\u05d8 \u05d4\u05ea\u05e7\u05e6\u05d9\u05d1","Content-Type":"text/plain;charset=utf-8"},
+    body:"\u2705 \u05d4\u05d7\u05d9\u05d1\u05d5\u05e8 \u05e2\u05d5\u05d1\u05d3! \u05ea\u05e7\u05d1\u05dc \u05db\u05d0\u05df \u05d4\u05ea\u05e8\u05d0\u05d5\u05ea \u05d9\u05d5\u05de\u05d9\u05d5\u05ea."
+  }).then(()=>{
+    const st2=document.getElementById("ntfy-status");
+    if(st2)st2.textContent="\u2705 \u05e0\u05e9\u05de\u05e8! \u05d4\u05ea\u05e8\u05d0\u05ea \u05d1\u05d3\u05d9\u05e7\u05d4 \u05e0\u05e9\u05dc\u05d7\u05d4 \uD83D\uDD14";
+  }).catch(()=>{
+    const st2=document.getElementById("ntfy-status");
+    if(st2)st2.textContent="\u2705 \u05e0\u05e9\u05de\u05e8!";
+  });
+}
+
 function setView(v){
   currentView=v;
   document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
@@ -320,26 +339,8 @@ function deleteMonth(m,e){
   renderAll();
 }
 
-
-function saveNtfyTopic(){
-  const topic=document.getElementById("ntfy-topic-input")?.value.trim();
-  if(!topic){alert("הכנס topic");return;}
-  lsSet("bgt_ntfy_topic",topic);
-  syncPush("bgt_ntfy_topic",topic);
-  const st=document.getElementById("ntfy-status");
-  if(st){st.textContent="✅ נשמר! topic: "+topic;}
-  // Send test notification
-  fetch("https://ntfy.sh/"+topic,{
-    method:"POST",
-    headers:{"Title":"💸 בוט התקציב","Content-Type":"text/plain;charset=utf-8"},
-    body:"✅ החיבור עובד! תקבל כאן התראות יומיות."
-  }).then(()=>{
-    const st2=document.getElementById("ntfy-status");
-    if(st2)st2.textContent="✅ נשמר! התראת בדיקה נשלחה לטלפון 🔔";
-  }).catch(()=>{});
-}
-
 function renderAll(){
+  try{
   renderMonthTabs();
   const{cash,bank,bit,cashSpent,bankSpent,bitSpent,cashIncome,bankIncome,bitIncome,totalSpent,totalSaved,cur}=getBalances();
   const total=cash+bank+bit;
@@ -384,10 +385,10 @@ function renderAll(){
       <div style="font-size:12px;color:#666;margin-bottom:20px;">התראות דרך ntfy — עובד גם כשהדפדפן סגור</div>
       <div style="background:#111230;border:1px solid #ffffff12;border-radius:14px;padding:16px;margin-bottom:12px;">
         <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:10px;">📲 שלב 1 — התקן ntfy</div>
-        <div style="font-size:12px;color:#aaa;line-height:1.8;">• אנדרואיד: <strong>Play Store</strong><br>• אייפון: <strong>App Store</strong></div>
+        <div style="font-size:12px;color:#aaa;line-height:1.8;">• אנדרואיד: Play Store<br>• אייפון: App Store</div>
       </div>
       <div style="background:#111230;border:1px solid #ffffff12;border-radius:14px;padding:16px;margin-bottom:12px;">
-        <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:10px;">🔑 שלב 2 — בחר Topic</div>
+        <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:10px;">🔑 שלב 2 — הכנס Topic</div>
         <div style="font-size:12px;color:#aaa;margin-bottom:10px;">שם אקראי שרק אתה יודע, לדוגמה: liel-budget-7743</div>
         <input id="ntfy-topic-input" type="text" value="${_ntfyTopic}" placeholder="liel-budget-7743"
           style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid #ffffff18;background:#0A0A14;color:#FFD700;font-size:13px;font-family:Heebo,sans-serif;outline:none;margin-bottom:8px;direction:ltr;">
@@ -395,23 +396,15 @@ function renderAll(){
         <div id="ntfy-status" style="font-size:11px;color:#55EFC4;margin-top:8px;text-align:center;"></div>
       </div>
       <div style="background:#111230;border:1px solid #ffffff12;border-radius:14px;padding:16px;margin-bottom:12px;">
-        <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:10px;">⏰ שלב 3 — הגדר טריגר ב-Apps Script</div>
+        <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:10px;">⏰ שלב 3 — טריגר ב-Apps Script</div>
         <div style="font-size:12px;color:#aaa;line-height:1.8;">
-          1. פתח <strong style="color:#fff;">script.google.com</strong><br>
-          2. לחץ <strong style="color:#fff;">Triggers</strong> בסרגל הצד<br>
-          3. לחץ <strong style="color:#4ECDC4;">+ Add Trigger</strong><br>
-          4. פונקציה: <strong style="color:#FFD700;">sendDailyReminder</strong><br>
-          5. מקור: <strong style="color:#fff;">Time-driven → Day timer</strong><br>
-          6. בחר שעה — לדוגמה <strong style="color:#FFD700;">9pm–10pm</strong>
+          1. script.google.com<br>2. Triggers → Add Trigger<br>
+          3. sendDailyReminder → Time-driven → Day timer → בחר שעה
         </div>
       </div>
       <div style="background:#111230;border:1px solid #ffffff12;border-radius:14px;padding:16px;">
-        <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:10px;">📱 שלב 4 — הירשם ב-ntfy בטלפון</div>
-        <div style="font-size:12px;color:#aaa;line-height:1.8;">
-          1. פתח ntfy → לחץ +<br>
-          2. הכנס את ה-Topic שבחרת<br>
-          3. <strong style="color:#55EFC4;">✅ סיימת!</strong>
-        </div>
+        <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:10px;">📱 שלב 4 — הירשם ב-ntfy</div>
+        <div style="font-size:12px;color:#aaa;line-height:1.8;">פתח ntfy → + → הכנס Topic → Subscribe<br><strong style="color:#55EFC4;">✅ סיימת!</strong></div>
       </div>
     </div>`;
     return;
@@ -849,6 +842,8 @@ function renderAll(){
   }
   window._expType=window._expType||"cash";
   window._incType=window._incType||"cash";
+
+  }catch(e){const ct=document.getElementById("main-content");if(ct)ct.innerHTML='<div style="color:#FF6B6B;padding:20px">שגיאה: '+e.message+'</div>';console.error(e);}
 }
 
 function renderMonthTabs(){
