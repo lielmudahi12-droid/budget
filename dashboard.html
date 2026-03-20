@@ -496,6 +496,15 @@ viewHtml+=`<div class="grid2">
   }
 
   if(currentView==="income"){
+    const fi=lsGet("bgt_future_income",null);
+    const _fiToday=todayStr();
+    if(fi&&fi.date<=_fiToday){
+      const newInc={id:Date.now(),date:fi.date,desc:fi.desc||"משכורת",amount:fi.amount,type:fi.wallet||"bank"};
+      income.push(newInc);lsSet(LS.income,income);
+      localStorage.removeItem("bgt_future_income");
+    }
+    const _fiNow=lsGet("bgt_future_income",null);
+    const _fiWalletNow=window._fiWallet||(_fiNow?_fiNow.wallet:"bank");
     viewHtml+=`<div style="font-size:12px;color:#aaa;font-weight:700;margin-bottom:8px;letter-spacing:1px;">📥 סך הכנסות החודש לכל ארנק</div>
     <div class="grid3">
       ${[{l:"💵 מזומן",v:cashIncome,c:"#55EFC4"},{l:"🏦 בנק",v:bankIncome,c:"#4ECDC4"},{l:"🔵 ביט",v:bitIncome,c:"#6C9BFF"}].map(k=>`
@@ -509,35 +518,31 @@ viewHtml+=`<div class="grid2">
         <button class="date-btn placeholder" id="inc-date-btn" onclick="openCal('inc-date-btn','inc-date-val')">📅 בחר תאריך</button>
         <input type="hidden" id="inc-date-val">
         <div class="pay-toggle">
-          ${[["cash","💵 מזומן","#55EFC4"],["bank","🏦 בנק","#4ECDC4"],["bit","🔵 ביט","#6C9BFF"]].map(([t,l,c])=>`
-            <button class="pay-opt" id="inctype-${t}" onclick="setIncType('${t}')" style="border-color:${t==="cash"?"#55EFC4":"#ffffff12"};background:${t==="cash"?"#55EFC420":"transparent"};color:${t==="cash"?"#55EFC4":"#555"};">${l}</button>`).join("")}
+          ${[["cash","💵 מזומן","#55EFC4"],["bank","🏦 בנק","#4ECDC4"],["bit","🔵 ביט","#6C9BFF"]].map(([t,l,clr])=>`
+            <button class="pay-opt" id="inctype-${t}" onclick="setIncType('${t}')" style="border-color:${t==="cash"?"#55EFC4":"#ffffff12"};background:${t==="cash"?"#55EFC420":"transparent"};color:${t==="cash"?"#55EFC4":"#aaa"};">${l}</button>`).join("")}
         </div>
         <button class="btn btn-gold" onclick="addIncome()">הוסף הכנסה</button>
       </div>
     </div>
     <div class="card" style="border-color:#FFD70020;background:linear-gradient(135deg,#13131F,#1a1400);">
       <div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:12px;">⏰ הכנסה עתידית צפויה</div>
-      ${(()=>{
-        const fi=lsGet("bgt_future_income",null);
-        const today=todayStr();
-        if(fi&&fi.date<=today){
-          // auto-apply: add to income
-          const newInc={id:Date.now(),date:fi.date,desc:fi.desc||"משכורת",amount:fi.amount,type:fi.wallet||"bank"};
-          income.push(newInc);lsSet(LS.income,income);
-          localStorage.removeItem("bgt_future_income");
-          return '<div style="color:#55EFC4;font-size:13px;text-align:center;">✅ ההכנסה הצפויה נוספה אוטומטית!</div>';
-        }
-        return '<div style="display:grid;gap:9px;">'
-          +'<input class="inp" id="fi-desc" placeholder="תיאור (למשל: משכורת)" value="'+(fi?fi.desc||"":"")+'"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><input class="inp" id="fi-hours" type="number" placeholder="שעות עבודה" value="'+(fi?fi.hours||'':'')+'"><input class="inp" id="fi-rate" type="number" placeholder="₪ לשעה" value="'+(fi?fi.rate||'':'')+'"></div><div style="font-size:13px;color:#FFD700;font-weight:700;text-align:center;padding:4px;">סכום: '+(fi&&fi.hours&&fi.rate?(fi.hours*fi.rate)+'₪':'---')+'</div>><input type="date" class="inp" id="fi-date" value="'+(fi?fi.date||"":"")
-          +'" style="direction:ltr;">'
-          +'<div class="pay-toggle">'
-          +'${[["cash","💵 מזומן","#55EFC4"],["bank","🏦 בנק","#4ECDC4"],["bit","🔵 ביט","#6C9BFF"]].map(([t,l,cl])=>'
-          +'`<button class="pay-opt" onclick="window._fiWallet=\''+t+'\';this.parentNode.querySelectorAll(\'.pay-opt\').forEach(b=>{b.style.borderColor=\'#ffffff12\';b.style.background=\'transparent\';b.style.color=\'#aaa\'});this.style.borderColor=\''+cl+'\';this.style.background=\''+cl+'20\';this.style.color=\''+cl+'\'" style="border-color:${window._fiWallet===\''+t+'\'?\''+cl+'\' :\'#ffffff12\'};background:${window._fiWallet===\''+t+'\'?\''+cl+'20\' :\'transparent\'};color:${window._fiWallet===\''+t+'\'?\''+cl+'\':\'#aaa\'};">${l}</button>`).join("")}'
-          +'</div>'
-          +'<button class="btn btn-gold" onclick="saveFutureIncome()">שמור הכנסה צפויה 💾</button>'
-          +(fi?'<button class="btn" style="background:#FF6B6B20;color:#FF6B6B;border:1px solid #FF6B6B30;" onclick="localStorage.removeItem(\'bgt_future_income\');renderAll();">🗑️ מחק הכנסה צפויה</button>':'')
-          +'</div>';
-      })()}
+      <div style="display:grid;gap:9px;">
+        <input class="inp" id="fi-desc" placeholder="תיאור (למשל: משכורת)" value="${_fiNow?_fiNow.desc||"":""}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <input class="inp" id="fi-hours" type="number" placeholder="שעות עבודה" value="${_fiNow?_fiNow.hours||"":""}">
+          <input class="inp" id="fi-rate" type="number" placeholder="₪ לשעה" value="${_fiNow?_fiNow.rate||"":""}">
+        </div>
+        <div style="font-size:13px;color:#FFD700;font-weight:700;text-align:center;padding:4px;">
+          סכום: ${_fiNow&&_fiNow.hours&&_fiNow.rate?Math.round(_fiNow.hours*_fiNow.rate)+"₪":"---"}
+        </div>
+        <input type="date" class="inp" id="fi-date" value="${_fiNow?_fiNow.date||"":""}" style="direction:ltr;">
+        <div class="pay-toggle">
+          ${[["cash","💵 מזומן","#55EFC4"],["bank","🏦 בנק","#4ECDC4"],["bit","🔵 ביט","#6C9BFF"]].map(([t,l,clr])=>`
+            <button class="pay-opt" onclick="window._fiWallet='${t}';renderAll();" style="border-color:${_fiWalletNow===t?clr:"#ffffff12"};background:${_fiWalletNow===t?clr+"20":"transparent"};color:${_fiWalletNow===t?clr:"#aaa"};">${l}</button>`).join("")}
+        </div>
+        <button class="btn btn-gold" onclick="saveFutureIncome()">שמור הכנסה צפויה 💾</button>
+        ${_fiNow?"<button class=\"btn\" style=\"background:#FF6B6B20;color:#FF6B6B;border:1px solid #FF6B6B30;\" onclick=\"localStorage.removeItem('bgt_future_income');window._fiWallet=null;renderAll();\">🗑️ מחק הכנסה צפויה</button>":""}
+      </div>
     </div>
     <div class="card">
       <div style="font-size:13px;font-weight:700;margin-bottom:10px;">📋 כל ההכנסות</div>
