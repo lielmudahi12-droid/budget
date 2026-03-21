@@ -342,7 +342,7 @@ function renderAll(){
         ${[{l:"💵 מזומן",v:cash,s:`−${cashSpent}₪`,c:"#55EFC4"},{l:"🏦 בנק",v:bank,s:`−${bankSpent}₪`,c:"#4ECDC4"},{l:"🔵 ביט",v:bit,s:`−${bitSpent}₪`,c:"#6C9BFF"},(()=>{
         const fi2=lsGet("bgt_future_income",null);
         const fiAmt=fi2&&fi2.date>todayStr()?fi2.amount:0;
-        const displayVal=fiAmt>0?(total+fiAmt)+"<br><span style=\"font-size:11px;color:#FFD70088;font-weight:400;\">כרגע "+total+"₪</span>":total;
+        const displayVal=fiAmt>0?total+"<br><span style=\"font-size:13px;color:#FFD70088;font-weight:600;\">(+"+(total+fiAmt)+"₪)</span>":total;
         return {l:"💰 סה״כ",v:displayVal,s:total>=0?"✅":"⚠️",c:total>=0?"#FFD700":"#FF6B6B"};
       })()].map(b=>`
           <div class="w-item" style="border:1px solid ${b.c}18;">
@@ -535,7 +535,7 @@ viewHtml+=`<div class="grid2">
         <div style="font-size:13px;color:#FFD700;font-weight:700;text-align:center;padding:6px;background:#FFD70010;border-radius:8px;">
           ${_fiNow&&_fiNow.hours&&_fiNow.rate?_fiNow.hours+" שעות × "+_fiNow.rate+"₪ = "+Math.round(_fiNow.hours*_fiNow.rate)+"₪":"הכנס שעות ומחיר לשעה"}
         </div>
-        <input type="date" class="inp" id="fi-date" value="${_fiNow?_fiNow.date||"":""}" style="direction:ltr;">
+        <button class="date-btn ${_fiNow&&_fiNow.date?'':'placeholder'}" id="fi-date-btn" onclick="openCal('fi-date-btn','fi-date-val')">${_fiNow&&_fiNow.date?'📅 '+_fiNow.date:'📅 בחר תאריך'}</button><input type="hidden" id="fi-date-val" value="${_fiNow?_fiNow.date||'':''}">
         <div class="pay-toggle">
           ${[["cash","💵 מזומן","#55EFC4"],["bank","🏦 בנק","#4ECDC4"],["bit","🔵 ביט","#6C9BFF"]].map(([t,l,clr])=>`
             <button class="pay-opt" onclick="window._fiWallet='${t}';renderAll();" style="border-color:${_fiWalletNow===t?clr:"#ffffff12"};background:${_fiWalletNow===t?clr+"20":"transparent"};color:${_fiWalletNow===t?clr:"#aaa"};">${l}</button>`).join("")}
@@ -1229,7 +1229,7 @@ function saveFutureIncome(){
   const hours=parseFloat(document.getElementById("fi-hours")?.value||"0");
   const rate=parseFloat(document.getElementById("fi-rate")?.value||"0");
   const amount=Math.round(hours*rate);
-  const date=document.getElementById("fi-date")?.value||"";
+  const date=document.getElementById("fi-date-val")?.value||"";
   const wallet=window._fiWallet||"bank";
   if(!amount||!date){alert("הכנס סכום ותאריך");return;}
   const fi={amount,date,desc,wallet,hours,rate};
