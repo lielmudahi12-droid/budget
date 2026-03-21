@@ -545,6 +545,30 @@ viewHtml+=`<div class="grid2">
       </div>
     </div>
     <div class="card">
+      <div style="font-size:13px;font-weight:700;margin-bottom:14px;">📊 התפלגות הכנסות</div>
+      ${income.length===0?'<div style="font-size:12px;color:#999;text-align:center;padding:20px;">אין הכנסות עדיין</div>':`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center;">
+        <div style="position:relative;height:180px;"><canvas id="inc-pie-chart" width="300" height="180"></canvas></div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${(()=>{
+            const byDesc={};
+            income.forEach(i=>{byDesc[i.desc]=(byDesc[i.desc]||0)+i.amount;});
+            const total=Object.values(byDesc).reduce((a,b)=>a+b,0);
+            const colors=["#55EFC4","#FFD700","#4ECDC4","#FF6B6B","#A29BFE","#FD79A8","#6C9BFF","#E17055"];
+            return Object.entries(byDesc).sort((a,b)=>b[1]-a[1]).map(([k,v],i)=>
+              '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'
+              +'<div style="display:flex;align-items:center;gap:6px;">'
+              +'<div style="width:10px;height:10px;border-radius:50%;background:'+colors[i%colors.length]+';flex-shrink:0;"></div>'
+              +'<span style="font-size:12px;color:#E8E8F0;">'+k+'</span></div>'
+              +'<span style="font-size:12px;color:#aaa;font-weight:600;">'+v+'₪ ('+Math.round(v/total*100)+'%)</span>'
+              +'</div>'
+            ).join('');
+          })()}
+        </div>
+      </div>`}
+    </div>
+
+    <div class="card">
       <div style="font-size:13px;font-weight:700;margin-bottom:14px;">📋 כל ההכנסות</div>
       ${income.length===0?'<div style="font-size:12px;color:#999;text-align:center;padding:20px;">אין הכנסות עדיין</div>':`
       <table style="width:100%;border-collapse:collapse;font-size:13px;">
@@ -581,24 +605,44 @@ viewHtml+=`<div class="grid2">
     </div>`;
   }
 
+
   if(currentView==="transactions"){
     viewHtml+=`<div class="card">
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px;">📋 עסקאות — ${activeMonth} (${cur.length})</div>
-      ${[...cur].sort((a,b)=>b.date.localeCompare(a.date)).map((t,i)=>`
-        <div class="txn-row">
-          <div style="display:flex;gap:9px;align-items:center;flex:1;">
-            <div class="cat-dot" style="background:${COLORS[t.category]||"#ddd"};"></div>
-            <div>
-              <div style="font-size:13px;">${t.desc}</div>
-              <div style="font-size:12px;color:#999;">${t.date} · ${CAT_LABELS[t.category]||t.category} · ${PAY_LABELS[t.type]||t.type}</div>
-            </div>
-          </div>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <div style="font-weight:700;font-size:14px;color:${t.category==="beitar"?"#FFD700":t.category==="savings"?"#55EFC4":"#FF6B6B"};">−${t.amount}₪</div>
-            <button class="btn-edit" onclick="openEditTxn('${t.id}','${activeMonth}')">✏️</button>
-            <button class="btn-red" onclick="deleteTxn('${t.id}','${activeMonth}')">🗑️</button>
-          </div>
-        </div>`).join("")||'<div style="font-size:12px;color:#999;text-align:center;padding:20px;">אין עסקאות עדיין</div>'}
+      <div style="font-size:13px;font-weight:700;margin-bottom:14px;">📋 עסקאות — ${activeMonth} (${cur.length})</div>
+      ${cur.length===0?'<div style="font-size:12px;color:#999;text-align:center;padding:20px;">אין עסקאות עדיין</div>':`
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="border-bottom:1px solid #ffffff15;">
+            <th style="text-align:right;padding:6px 4px;color:#bbb;font-weight:600;">תיאור</th>
+            <th style="text-align:center;padding:6px 4px;color:#bbb;font-weight:600;">תאריך</th>
+            <th style="text-align:center;padding:6px 4px;color:#bbb;font-weight:600;">קטגוריה</th>
+            <th style="text-align:center;padding:6px 4px;color:#bbb;font-weight:600;">תשלום</th>
+            <th style="text-align:left;padding:6px 4px;color:#bbb;font-weight:600;">סכום</th>
+            <th style="padding:6px 4px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${[...cur].sort((a,b)=>b.date.localeCompare(a.date)).map(t=>`
+          <tr style="border-bottom:1px solid #ffffff08;">
+            <td style="padding:8px 4px;color:#E8E8F0;">${t.desc}</td>
+            <td style="padding:8px 4px;color:#aaa;text-align:center;direction:ltr;">${t.date}</td>
+            <td style="padding:8px 4px;text-align:center;">
+              <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;">
+                <span style="width:7px;height:7px;border-radius:50%;background:${COLORS[t.category]||'#ddd'};display:inline-block;"></span>
+                <span style="color:#E8E8F0;">${CAT_LABELS[t.category]||t.category}</span>
+              </span>
+            </td>
+            <td style="padding:8px 4px;text-align:center;font-size:12px;color:${PAY_COLORS[t.type]||'#aaa'}">${PAY_LABELS[t.type]||t.type}</td>
+            <td style="padding:8px 4px;font-weight:700;color:${t.category==='beitar'?'#FFD700':t.category==='savings'?'#55EFC4':'#FF6B6B'};">−${t.amount}₪</td>
+            <td style="padding:8px 4px;">
+              <div style="display:flex;gap:6px;">
+                <button class="btn-edit" onclick="openEditTxn('${t.id}','${activeMonth}')">✏️</button>
+                <button class="btn-red" onclick="deleteTxn('${t.id}','${activeMonth}')">🗑️</button>
+              </div>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`}
     </div>`;
   }
 
@@ -871,6 +915,23 @@ viewHtml+=`<div class="grid2">
   }
   window._expType=window._expType||"cash";
   window._incType=window._incType||"cash";
+  // Income pie chart
+  if(currentView==="income"&&income.length>0){
+    setTimeout(()=>{
+      const incPieCtx=document.getElementById("inc-pie-chart")?.getContext("2d");
+      if(!incPieCtx)return;
+      if(window._incPieChart){window._incPieChart.destroy();window._incPieChart=null;}
+      const byDesc={};
+      income.forEach(i=>{byDesc[i.desc]=(byDesc[i.desc]||0)+i.amount;});
+      const clrs=["#55EFC4","#FFD700","#4ECDC4","#FF6B6B","#A29BFE","#FD79A8","#6C9BFF","#E17055"];
+      const sorted=Object.entries(byDesc).sort((a,b)=>b[1]-a[1]);
+      window._incPieChart=new Chart(incPieCtx,{
+        type:"doughnut",
+        data:{labels:sorted.map(([k])=>k),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:clrs.slice(0,sorted.length),borderWidth:0}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}₪`}}},cutout:"55%"}
+      });
+    },50);
+  }
 }
 
 function renderMonthTabs(){
