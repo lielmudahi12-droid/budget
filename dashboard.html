@@ -545,19 +545,39 @@ viewHtml+=`<div class="grid2">
       </div>
     </div>
     <div class="card">
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px;">📋 כל ההכנסות</div>
-      ${[...income].sort((a,b)=>b.date.localeCompare(a.date)).map(inc=>`
-        <div class="txn-row">
-          <div style="display:flex;gap:9px;align-items:center;">
-            <div style="width:8px;height:8px;border-radius:50%;background:${PAY_COLORS[inc.type]||"#55EFC4"};"></div>
-            <div><div style="font-size:13px;">${inc.desc}</div><div style="font-size:12px;color:#999;">${inc.date} · ${PAY_LABELS[inc.type]||inc.type}</div></div>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <div style="font-weight:700;color:#55EFC4;font-size:14px;">+${inc.amount}₪</div>
-            <button class="btn-edit" onclick="openEditIncome('${inc.id}')">✏️</button>
-            <button class="btn-red" onclick="deleteIncome('${inc.id}')">🗑️</button>
-          </div>
-        </div>`).join("")||'<div style="font-size:12px;color:#999;text-align:center;padding:20px;">אין הכנסות עדיין</div>'}
+      <div style="font-size:13px;font-weight:700;margin-bottom:14px;">📋 כל ההכנסות</div>
+      ${income.length===0?'<div style="font-size:12px;color:#999;text-align:center;padding:20px;">אין הכנסות עדיין</div>':`
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="border-bottom:1px solid #ffffff15;">
+            <th style="text-align:right;padding:6px 4px;color:#bbb;font-weight:600;">תיאור</th>
+            <th style="text-align:center;padding:6px 4px;color:#bbb;font-weight:600;">תאריך</th>
+            <th style="text-align:center;padding:6px 4px;color:#bbb;font-weight:600;">ארנק</th>
+            <th style="text-align:left;padding:6px 4px;color:#bbb;font-weight:600;">סכום</th>
+            <th style="text-align:left;padding:6px 4px;color:#bbb;font-weight:600;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${[...income].sort((a,b)=>b.date.localeCompare(a.date)).map(inc=>`
+          <tr style="border-bottom:1px solid #ffffff08;">
+            <td style="padding:8px 4px;color:#E8E8F0;">${inc.desc}</td>
+            <td style="padding:8px 4px;color:#aaa;text-align:center;direction:ltr;">${inc.date}</td>
+            <td style="padding:8px 4px;text-align:center;">
+              <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:${PAY_COLORS[inc.type]||'#55EFC4'};">
+                <span style="width:7px;height:7px;border-radius:50%;background:${PAY_COLORS[inc.type]||'#55EFC4'};display:inline-block;"></span>
+                ${PAY_LABELS[inc.type]||inc.type}
+              </span>
+            </td>
+            <td style="padding:8px 4px;font-weight:700;color:#55EFC4;">+${inc.amount}₪</td>
+            <td style="padding:8px 4px;">
+              <div style="display:flex;gap:6px;">
+                <button class="btn-edit" onclick="openEditIncome('${inc.id}')">✏️</button>
+                <button class="btn-red" onclick="deleteIncome('${inc.id}')">🗑️</button>
+              </div>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`}
     </div>`;
   }
 
