@@ -284,7 +284,7 @@ function getBalances(){
     cashSpent:cs,bankSpent:bs,bitSpent:bts,
     cashIncome:ci,bankIncome:bi,bitIncome:bti,
     totalSpent:cur.filter(t=>t.category!=="savings").reduce((s,t)=>s+t.amount,0),
-    totalSaved:Math.max(0,income.filter(i=>monthKey(i.date)===activeMonth).reduce((s,i)=>s+i.amount,0)-cur.filter(t=>t.category!=="savings").reduce((s,t)=>s+t.amount,0)),
+    totalSaved:income.filter(i=>monthKey(i.date)===activeMonth).reduce((s,i)=>s+i.amount,0)-cur.filter(t=>t.category!=="savings").reduce((s,t)=>s+t.amount,0),
     cur
   };
 }
@@ -365,7 +365,7 @@ function renderAll(){
 
   if(currentView==="dashboard"){
     viewHtml+=`<div class="grid4">
-      ${[{l:"סה״כ הוצאות",v:`${Math.round(totalSpent)}₪`,i:"💸",c:"#FF6B6B"},{l:"נחסך",v:`${Math.round(totalSaved)}₪`,i:"💰",c:"#55EFC4"},{l:"עסקאות",v:cur.length,i:"📝",c:"#A29BFE"},{l:"⚽ ביתר",v:`${cats.beitar||0}₪`,i:"🟡",c:"#FFD700"}].map(k=>`
+      ${[{l:"סה״כ הוצאות",v:`${Math.round(totalSpent)}₪`,i:"💸",c:"#FF6B6B"},(()=>{const fi4=lsGet("bgt_future_income",null);const fiAmt4=fi4&&fi4.date>todayStr()?fi4.amount:0;const withFi=totalSaved+fiAmt4;const col=totalSaved>=0?"#55EFC4":"#FF6B6B";const fiTxt=fiAmt4>0?" ("+( withFi>=0?"+":"")+Math.round(withFi)+"₪)":"";return {l:"מאזן חודשי",v:Math.round(totalSaved)+"₪"+fiTxt,i:"💰",c:col};})() ,{l:"עסקאות",v:cur.length,i:"📝",c:"#A29BFE"},{l:"⚽ ביתר",v:`${cats.beitar||0}₪`,i:"🟡",c:"#FFD700"}].map(k=>`
         <div class="stat-card" style="border-color:${k.c}18;">
           <div style="font-size:18px;">${k.i}</div>
           <div class="stat-val" style="color:${k.c};margin-top:3px;">${k.v}</div>
@@ -429,7 +429,7 @@ viewHtml+=`<div class="grid2">
     viewHtml+=`<div class="card"><div style="font-size:12px;color:#aaa;margin-bottom:8px;">📈 הוצאות מצטברות — ${activeMonth}<span style="font-size:12px;color:#999;margin-right:8px;">הקו הרציף = כמה הוצאת | הקו המקווקו = תחזית אם תמשיך בקצב זה עד סוף החודש</span></div><div style="position:relative;height:220px;"><canvas id="line-chart" width="1000" height="220"></canvas></div></div>`;
     viewHtml+=`<div class="card"><div style="font-size:12px;color:#aaa;margin-bottom:8px;">🔥 ימים חמים — ${activeMonth}</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">${dowHeader}${emptyPrefix}${heatHtml}</div></div>`;
     viewHtml+=`<div class="card"><div style="font-size:12px;color:#aaa;margin-bottom:8px;">📊 השוואת קטגוריות — 3 חודשים אחרונים</div><div style="position:relative;height:220px;"><canvas id="catcmp-chart" width="1000" height="220"></canvas></div></div>`;
-    viewHtml+=`<div class="card" style="border-color:#55EFC418;"><div style="font-size:12px;color:#aaa;margin-bottom:10px;">💰 גרף חיסכון מצטבר</div><div style="position:relative;height:200px;"><canvas id="saving-chart" width="1000" height="200"></canvas></div></div>`;
+    viewHtml+=`<div class="card" style="border-color:#55EFC418;"><div style="font-size:12px;color:#aaa;margin-bottom:10px;">💰 גרף מאזן מצטבר</div><div style="position:relative;height:200px;"><canvas id="saving-chart" width="1000" height="200"></canvas></div></div>`;
     viewHtml+=`<div class="card" style="border-color:#FFD70018;background:linear-gradient(135deg,#13131F,#1a1400);">
       <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#FFD700;">📅 סיכום שנתי — ${Math.round(yearSpent)}₪</div>
       <div class="grid3">${Object.entries(yearCats).filter(([k])=>k!=="savings").map(([k,v])=>`
@@ -884,7 +884,7 @@ viewHtml+=`<div class="grid2">
           if(savingChart)savingChart.destroy();
           const allMonths=Object.keys(allTxns);
           const savData=[];let cumSav=0;
-          for(const m of allMonths){const mt=allTxns[m]||[];cumSav+=mt.filter(t=>t.category==="savings").reduce((s,t)=>s+t.amount,0);savData.push(cumSav);}
+          for(const m of allMonths){const mt=allTxns[m]||[];const inc_m=income.filter(i=>monthKey(i.date)===m).reduce((s,i)=>s+i.amount,0);const exp_m=mt.filter(t=>t.category!=="savings").reduce((s,t)=>s+t.amount,0);cumSav+=(inc_m-exp_m);savData.push(cumSav);}
           const incData=[];let cumInc=0;
           for(const m of allMonths){const mi=income.filter(i=>monthKey(i.date)===m);cumInc+=mi.reduce((s,i)=>s+i.amount,0);incData.push(cumInc);}
           savingChart=new Chart(savCtx,{type:"line",data:{labels:allMonths.map(m=>m.split(" ")[0]),datasets:[
