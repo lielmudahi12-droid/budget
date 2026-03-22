@@ -284,7 +284,7 @@ function getBalances(){
     cashSpent:cs,bankSpent:bs,bitSpent:bts,
     cashIncome:ci,bankIncome:bi,bitIncome:bti,
     totalSpent:cur.filter(t=>t.category!=="savings").reduce((s,t)=>s+t.amount,0),
-    totalSaved:cur.filter(t=>t.category==="savings").reduce((s,t)=>s+t.amount,0),
+    totalSaved:Math.max(0,income.filter(i=>monthKey(i.date)===activeMonth).reduce((s,i)=>s+i.amount,0)-cur.filter(t=>t.category!=="savings").reduce((s,t)=>s+t.amount,0)),
     cur
   };
 }
