@@ -205,7 +205,7 @@ async function syncAll(){
       debts=mergeArraysById(remote,local);
       localStorage.setItem(LS.debts,JSON.stringify(debts));
     }
-    updateSyncStatus();renderAll();
+    activeMonth=nowMonth();if(!allTxns[activeMonth])allTxns[activeMonth]=[];updateSyncStatus();renderAll();
   }catch{
     document.getElementById("sync-text").textContent="אין חיבור";
     document.getElementById("sync-dot").style.background="#FF6B6B";
@@ -245,6 +245,7 @@ let income=[];
 let transfers=[];
 let activeMonth=nowMonth();
 let currentView="dashboard";
+let periodFilter="month"; // month | quarter | year
 let pieChart=null,barChart=null,lineChart=null,heatChart=null,catCmpChart=null,savingChart=null,_chartsFirst=true;
 
 function loadAll(){
@@ -256,7 +257,7 @@ function loadAll(){
   BUDGETS=lsGet(LS.budgets,{food:200,social:150,beitar:200,transport:100,hobbies:100,alcohol:100,other:50});
   futureIncome=lsGet(LS.futureIncome,null);
   const months=Object.keys(allTxns);
-  if(months.length>0&&!allTxns[activeMonth])activeMonth=months[months.length-1];
+  activeMonth=nowMonth();if(!allTxns[activeMonth])allTxns[activeMonth]=[];
   updateSyncStatus();renderAll();
 }
 
@@ -505,9 +506,17 @@ viewHtml+=`<div class="grid2">
     }
     const _fiNow=lsGet("bgt_future_income",null);
     const _fiWalletNow=window._fiWallet||(_fiNow?_fiNow.wallet:"bank");
-    viewHtml+=`<div style="font-size:12px;color:#aaa;font-weight:700;margin-bottom:8px;letter-spacing:1px;">📥 סך הכנסות החודש לכל ארנק</div>
+    const _now=new Date();const _periodStart=periodFilter==="year"?new Date(_now.getFullYear(),0,1):periodFilter==="quarter"?new Date(_now.getFullYear(),_now.getMonth()-2,1):new Date(_now.getFullYear(),_now.getMonth(),1);
+    const _periodIncome=income.filter(i=>new Date(i.date)>=_periodStart);
+    const _periodLabel=periodFilter==="year"?"השנה":periodFilter==="quarter"?"3 חודשים אחרונים":"החודש";
+    const _cashInc=_periodIncome.filter(i=>i.type==="cash").reduce((s,i)=>s+i.amount,0);
+    const _bankInc=_periodIncome.filter(i=>i.type==="bank").reduce((s,i)=>s+i.amount,0);
+    const _bitInc=_periodIncome.filter(i=>i.type==="bit").reduce((s,i)=>s+i.amount,0);
+    viewHtml+=`<div style="display:flex;gap:6px;margin-bottom:12px;">
+        '+(['חודש','3 חודשים','שנה'].map((l,i)=>{const p=['month','quarter','year'][i];const active=periodFilter===p;return '<button onclick="periodFilter=\''+p+'\';renderAll();" style="padding:5px 12px;border-radius:10px;border:1px solid '+(active?'#FFD700':'#ffffff18')+';background:'+(active?'#FFD70015':'transparent')+';color:'+(active?'#FFD700':'#aaa')+';font-size:12px;font-family:Heebo,sans-serif;cursor:pointer;">'+l+'</button>';})).join('')+'
+      </div><div style="font-size:12px;color:#aaa;font-weight:700;margin-bottom:8px;letter-spacing:1px;">📥 סך הכנסות — \${_periodLabel}</div>
     <div class="grid3">
-      ${[{l:"💵 מזומן",v:cashIncome,c:"#55EFC4"},{l:"🏦 בנק",v:bankIncome,c:"#4ECDC4"},{l:"🔵 ביט",v:bitIncome,c:"#6C9BFF"}].map(k=>`
+      ${[{l:"💵 מזומן",v:_cashInc,c:"#55EFC4"},{l:"🏦 בנק",v:_bankInc,c:"#4ECDC4"},{l:"🔵 ביט",v:_bitInc,c:"#6C9BFF"}].map(k=>`
         <div class="stat-card" style="border-color:${k.c}20;"><div class="stat-label">${k.l}</div><div class="stat-val" style="color:${k.c};font-size:24px;">${k.v}₪</div></div>`).join("")}
     </div>
     <div class="card">
@@ -582,7 +591,7 @@ viewHtml+=`<div class="grid2">
           </tr>
         </thead>
         <tbody>
-          ${[...income].sort((a,b)=>b.date.localeCompare(a.date)).map(inc=>`
+          ${[...income,...(()=>{const fi=lsGet("bgt_future_income",null);return fi?[{...fi,id:"future",type:fi.wallet||"bank",isFuture:true}]:[];})()].filter(i=>new Date(i.date)>=_periodStart).sort((a,b)=>b.date.localeCompare(a.date)).map(inc=>`
           <tr style="border-bottom:1px solid #ffffff08;">
             <td style="padding:8px 4px;color:#E8E8F0;">${inc.desc}</td>
             <td style="padding:8px 4px;color:#aaa;text-align:center;direction:ltr;">${inc.date}</td>
@@ -599,7 +608,7 @@ viewHtml+=`<div class="grid2">
                 <button class="btn-red" onclick="deleteIncome('${inc.id}')">🗑️</button>
               </div>
             </td>
-          </tr>`).join('')}
+          </tr>`).join('')})()}
         </tbody>
       </table>`}
     </div>`;
@@ -608,7 +617,10 @@ viewHtml+=`<div class="grid2">
 
   if(currentView==="transactions"){
     viewHtml+=`<div class="card">
-      <div style="font-size:13px;font-weight:700;margin-bottom:14px;">📋 עסקאות — ${activeMonth} (${cur.length})</div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;">📋 עסקאות — \${activeMonth}</div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;">
+        \'+(['חודש','3 חודשים','שנה'].map((l,i)=>{const p=['month','quarter','year'][i];const active=periodFilter===p;return '<button onclick="periodFilter=\''+p+'\';renderAll();" style="padding:5px 12px;border-radius:10px;border:1px solid '+(active?'#FFD700':'#ffffff18')+';background:'+(active?'#FFD70015':'transparent')+';color:'+(active?'#FFD700':'#aaa')+';font-size:12px;font-family:Heebo,sans-serif;cursor:pointer;">'+l+'</button>';})).join('')+'
+      </div>
       ${cur.length===0?'<div style="font-size:12px;color:#999;text-align:center;padding:20px;">אין עסקאות עדיין</div>':`
       <table style="width:100%;border-collapse:collapse;font-size:13px;">
         <thead>
@@ -640,7 +652,7 @@ viewHtml+=`<div class="grid2">
                 <button class="btn-red" onclick="deleteTxn('${t.id}','${activeMonth}')">🗑️</button>
               </div>
             </td>
-          </tr>`).join('')}
+          </tr>`).join('')})()}
         </tbody>
       </table>`}
     </div>`;
