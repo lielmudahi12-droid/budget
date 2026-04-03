@@ -280,8 +280,16 @@ function getBalances(){
     if(tr.from==="bank")ba-=tr.amount;if(tr.to==="bank")ba+=tr.amount;
     if(tr.from==="bit")bta-=tr.amount;if(tr.to==="bit")bta+=tr.amount;
   }
+  // Running balance: wallet + all income ever - all expenses ever + transfers
+  const allInc=income.reduce((s,i)=>({cash:s.cash+(i.type==="cash"?i.amount:0),bank:s.bank+(i.type==="bank"?i.amount:0),bit:s.bit+(i.type==="bit"?i.amount:0)}),{cash:0,bank:0,bit:0});
+  const allExp=Object.values(allTxns).flat();
+  const allCs=allExp.filter(t=>t.type==="cash"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
+  const allBs=allExp.filter(t=>t.type==="credit"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
+  const allBts=allExp.filter(t=>t.type==="bit"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
   return{
-    cash:wallet.cash+ci-cs+ca,bank:wallet.bank+bi-bs+ba,bit:(wallet.bit||0)+bti-bts+bta,
+    cash:wallet.cash+allInc.cash-allCs+ca,
+    bank:wallet.bank+allInc.bank-allBs+ba,
+    bit:(wallet.bit||0)+allInc.bit-allBts+bta,
     cashSpent:cs,bankSpent:bs,bitSpent:bts,
     cashIncome:ci,bankIncome:bi,bitIncome:bti,
     totalSpent:cur.filter(t=>t.category!=="savings").reduce((s,t)=>s+t.amount,0),
