@@ -268,9 +268,9 @@ function updateSyncStatus(){
 
 function getBalances(){
   const cur=allTxns[activeMonth]||[];
-  const ci=income.filter(i=>i.type==="cash").reduce((s,i)=>s+i.amount,0);
-  const bi=income.filter(i=>i.type==="bank").reduce((s,i)=>s+i.amount,0);
-  const bti=income.filter(i=>i.type==="bit").reduce((s,i)=>s+i.amount,0);
+  const ci=income.filter(i=>i.type==="cash"&&monthKey(i.date)===activeMonth).reduce((s,i)=>s+i.amount,0);
+  const bi=income.filter(i=>i.type==="bank"&&monthKey(i.date)===activeMonth).reduce((s,i)=>s+i.amount,0);
+  const bti=income.filter(i=>i.type==="bit"&&monthKey(i.date)===activeMonth).reduce((s,i)=>s+i.amount,0);
   const cs=cur.filter(t=>t.type==="cash"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
   const bs=cur.filter(t=>t.type==="credit"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
   const bts=cur.filter(t=>t.type==="bit"&&t.category!=="savings").reduce((s,t)=>s+t.amount,0);
@@ -513,7 +513,7 @@ viewHtml+=`<div class="grid2">
     const _bankInc=_periodIncome.filter(i=>i.type==="bank").reduce((s,i)=>s+i.amount,0);
     const _bitInc=_periodIncome.filter(i=>i.type==="bit").reduce((s,i)=>s+i.amount,0);
     viewHtml+=`<div style="display:flex;gap:6px;margin-bottom:12px;">
-        '+(['חודש','3 חודשים','שנה'].map((l,i)=>{const p=['month','quarter','year'][i];const active=periodFilter===p;return '<button onclick="periodFilter=\''+p+'\';renderAll();" style="padding:5px 12px;border-radius:10px;border:1px solid '+(active?'#FFD700':'#ffffff18')+';background:'+(active?'#FFD70015':'transparent')+';color:'+(active?'#FFD700':'#aaa')+';font-size:12px;font-family:Heebo,sans-serif;cursor:pointer;">'+l+'</button>';})).join('')+'
+        '+periodBtns()+'
       </div><div style="font-size:12px;color:#aaa;font-weight:700;margin-bottom:8px;letter-spacing:1px;">📥 סך הכנסות — \${_periodLabel}</div>
     <div class="grid3">
       ${[{l:"💵 מזומן",v:_cashInc,c:"#55EFC4"},{l:"🏦 בנק",v:_bankInc,c:"#4ECDC4"},{l:"🔵 ביט",v:_bitInc,c:"#6C9BFF"}].map(k=>`
@@ -619,7 +619,7 @@ viewHtml+=`<div class="grid2">
     viewHtml+=`<div class="card">
       <div style="font-size:13px;font-weight:700;margin-bottom:10px;">📋 עסקאות — \${activeMonth}</div>
       <div style="display:flex;gap:6px;margin-bottom:12px;">
-        \'+(['חודש','3 חודשים','שנה'].map((l,i)=>{const p=['month','quarter','year'][i];const active=periodFilter===p;return '<button onclick="periodFilter=\''+p+'\';renderAll();" style="padding:5px 12px;border-radius:10px;border:1px solid '+(active?'#FFD700':'#ffffff18')+';background:'+(active?'#FFD70015':'transparent')+';color:'+(active?'#FFD700':'#aaa')+';font-size:12px;font-family:Heebo,sans-serif;cursor:pointer;">'+l+'</button>';})).join('')+'
+        \'+periodBtns()+'
       </div>
       ${cur.length===0?'<div style="font-size:12px;color:#999;text-align:center;padding:20px;">אין עסקאות עדיין</div>':`
       <table style="width:100%;border-collapse:collapse;font-size:13px;">
@@ -1329,6 +1329,14 @@ function saveFutureIncome(){
   localStorage.setItem("bgt_future_income",JSON.stringify(fi));
   futureIncome=fi;
   renderAll();
+}
+
+function periodBtns(){
+  return ['month','quarter','year'].map((p,i)=>{
+    const l=["חודש","3 חודשים","שנה"][i];
+    const active=periodFilter===p;
+    return '<button onclick="periodFilter=\''+p+'\';renderAll();" style="padding:5px 12px;border-radius:10px;border:1px solid '+(active?'#FFD700':'#ffffff18')+';background:'+(active?'#FFD70015':'transparent')+';color:'+(active?'#FFD700':'#aaa')+';font-size:12px;font-family:Heebo,sans-serif;cursor:pointer;">'+l+'</button>';
+  }).join('');
 }
 // ── INIT ──
 document.getElementById('main-content').innerHTML='<div style="text-align:center;padding:60px;color:#FFD700;font-size:18px;">⚽ טוען נתונים...</div>';
