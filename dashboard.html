@@ -569,7 +569,7 @@ viewHtml+=`<div class="grid2">
         <div style="display:flex;flex-direction:column;gap:8px;">
           ${(()=>{
             const byDesc={};
-            income.forEach(i=>{byDesc[i.desc]=(byDesc[i.desc]||0)+i.amount;});
+            income.filter(i=>monthKey(i.date)===activeMonth).forEach(i=>{byDesc[i.desc]=(byDesc[i.desc]||0)+i.amount;});
             const total=Object.values(byDesc).reduce((a,b)=>a+b,0);
             const colors=["#55EFC4","#FFD700","#4ECDC4","#FF6B6B","#A29BFE","#FD79A8","#6C9BFF","#E17055"];
             return Object.entries(byDesc).sort((a,b)=>b[1]-a[1]).map(([k,v],i)=>
@@ -942,7 +942,7 @@ viewHtml+=`<div class="grid2">
       if(!incPieCtx)return;
       if(window._incPieChart){window._incPieChart.destroy();window._incPieChart=null;}
       const byDesc={};
-      income.forEach(i=>{byDesc[i.desc]=(byDesc[i.desc]||0)+i.amount;});
+      income.filter(i=>monthKey(i.date)===activeMonth).forEach(i=>{byDesc[i.desc]=(byDesc[i.desc]||0)+i.amount;});
       const clrs=["#55EFC4","#FFD700","#4ECDC4","#FF6B6B","#A29BFE","#FD79A8","#6C9BFF","#E17055"];
       const sorted=Object.entries(byDesc).sort((a,b)=>b[1]-a[1]);
       window._incPieChart=new Chart(incPieCtx,{
