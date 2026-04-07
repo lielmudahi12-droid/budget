@@ -205,7 +205,7 @@ async function syncAll(){
       debts=mergeArraysById(remote,local);
       localStorage.setItem(LS.debts,JSON.stringify(debts));
     }
-    activeMonth=nowMonth();if(!allTxns[activeMonth])allTxns[activeMonth]=[];updateSyncStatus();renderAll();
+    if(!allTxns[activeMonth])allTxns[activeMonth]=[];updateSyncStatus();renderAll();
   }catch{
     document.getElementById("sync-text").textContent="אין חיבור";
     document.getElementById("sync-dot").style.background="#FF6B6B";
@@ -257,7 +257,7 @@ function loadAll(){
   BUDGETS=lsGet(LS.budgets,{food:200,social:150,beitar:200,transport:100,hobbies:100,alcohol:100,other:50});
   futureIncome=lsGet(LS.futureIncome,null);
   const months=Object.keys(allTxns);
-  activeMonth=nowMonth();if(!allTxns[activeMonth])allTxns[activeMonth]=[];
+  if(!allTxns[activeMonth])allTxns[activeMonth]=[];
   updateSyncStatus();renderAll();
 }
 
@@ -514,8 +514,8 @@ viewHtml+=`<div class="grid2">
     }
     const _fiNow=lsGet("bgt_future_income",null);
     const _fiWalletNow=window._fiWallet||(_fiNow?_fiNow.wallet:"bank");
-    const _now=new Date();const _periodStart=periodFilter==="year"?new Date(_now.getFullYear(),0,1):periodFilter==="quarter"?new Date(_now.getFullYear(),_now.getMonth()-2,1):new Date(_now.getFullYear(),_now.getMonth(),1);
-    const _periodIncome=income.filter(i=>new Date(i.date)>=_periodStart);
+    const _now=new Date();const _activeParts=activeMonth.split(" ");const _activeDate=(()=>{  const months=["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];  const mi=months.indexOf(_activeParts[0]);  const yr=parseInt(_activeParts[1]||_now.getFullYear());  return mi>=0?new Date(yr,mi,1):new Date(_now.getFullYear(),_now.getMonth(),1);})();const _periodStart=periodFilter==="year"?new Date(_now.getFullYear(),0,1):periodFilter==="quarter"?new Date(_now.getFullYear(),_now.getMonth()-2,1):_activeDate;const _periodEnd=periodFilter==="month"?new Date(_activeDate.getFullYear(),_activeDate.getMonth()+1,0):new Date(9999,0,1);
+    const _periodIncome=income.filter(i=>new Date(i.date)>=_periodStart&&new Date(i.date)<=_periodEnd);
     const _periodLabel=periodFilter==="year"?"השנה":periodFilter==="quarter"?"3 חודשים אחרונים":"החודש";
     const _cashInc=_periodIncome.filter(i=>i.type==="cash").reduce((s,i)=>s+i.amount,0);
     const _bankInc=_periodIncome.filter(i=>i.type==="bank").reduce((s,i)=>s+i.amount,0);
@@ -599,7 +599,7 @@ viewHtml+=`<div class="grid2">
           </tr>
         </thead>
         <tbody>
-          ${[...income,...(()=>{const fi=lsGet("bgt_future_income",null);return fi?[{...fi,id:"future",type:fi.wallet||"bank",isFuture:true}]:[];})()].filter(i=>new Date(i.date)>=_periodStart).sort((a,b)=>b.date.localeCompare(a.date)).map(inc=>`
+          ${[...income,...(()=>{const fi=lsGet("bgt_future_income",null);return fi?[{...fi,id:"future",type:fi.wallet||"bank",isFuture:true}]:[];})()].filter(i=>new Date(i.date)>=_periodStart&&(i.isFuture||new Date(i.date)<=_periodEnd)).sort((a,b)=>b.date.localeCompare(a.date)).map(inc=>`
           <tr style="border-bottom:1px solid #ffffff08;">
             <td style="padding:8px 4px;color:#E8E8F0;">${inc.desc}</td>
             <td style="padding:8px 4px;color:#aaa;text-align:center;direction:ltr;">${inc.date}</td>
