@@ -426,6 +426,43 @@ viewHtml+=`<div class="grid2">
     viewHtml+=`<div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">📈 הוצאות מצטברות — ${activeMonth}<span style="font-size:10px;color:#444;margin-right:8px;">הקו הרציף = כמה הוצאת | הקו המקווקו = תחזית אם תמשיך בקצב זה עד סוף החודש</span></div><div style="position:relative;height:220px;"><canvas id="line-chart" width="1000" height="220"></canvas></div></div>`;
     viewHtml+=`<div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">🔥 ימים חמים — ${activeMonth}</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">${dowHeader}${emptyPrefix}${heatHtml}</div></div>`;
     viewHtml+=`<div class="card"><div style="font-size:11px;color:#555;margin-bottom:8px;">📊 השוואת קטגוריות — 3 חודשים אחרונים</div><div style="position:relative;height:220px;"><canvas id="catcmp-chart" width="1000" height="220"></canvas></div></div>`;
+    
+    // Monthly summary card
+    const _ms_inc=income.filter(function(i){return monthKey(i.date)===activeMonth;}).reduce(function(s,i){return s+i.amount;},0);
+    const _ms_bal=_ms_inc-cur.filter(function(t){return t.category!=="savings";}).reduce(function(s,t){return s+t.amount;},0);
+    const _ms_topCatArr=Object.entries(byCat(cur)).sort(function(a,b){return b[1]-a[1];});
+    const _ms_topTxn=[...cur].sort(function(a,b){return b.amount-a.amount;})[0];
+    const _ms_topCatHtml=_ms_topCatArr.length>0
+      ?'<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #ffffff08;">'
+        +'<span style="font-size:12px;color:#aaa;">🏆 קטגוריה מובילה</span>'
+        +'<span style="font-size:12px;color:#FFD700;font-weight:700;">'+(CAT_LABELS[_ms_topCatArr[0][0]]||_ms_topCatArr[0][0])+' — '+_ms_topCatArr[0][1]+'₪</span></div>'
+      :'';
+    const _ms_topTxnHtml=_ms_topTxn
+      ?'<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #ffffff08;">'
+        +'<span style="font-size:12px;color:#aaa;">💳 הוצאה הכי גדולה</span>'
+        +'<span style="font-size:12px;color:#FF6B6B;font-weight:700;">'+_ms_topTxn.desc+' — '+_ms_topTxn.amount+'₪</span></div>'
+      :'';
+    const _ms_balCol=_ms_bal>=0?"#55EFC4":"#FF6B6B";
+    const _ms_balStr=(_ms_bal>=0?"+":"")+Math.round(_ms_bal)+"₪";
+    viewHtml+='<div class="card" style="border-color:#FFD70018;background:linear-gradient(135deg,#13131F,#1a1400);">'
+      +'<div style="font-size:13px;font-weight:700;color:#FFD700;margin-bottom:14px;">📅 סיכום חודשי — '+activeMonth+'</div>'
+      +'<div class="grid2" style="gap:10px;margin-bottom:12px;">'
+      +'<div style="background:#0A0A14;border-radius:10px;padding:12px;text-align:center;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">💰 הכנסות</div>'
+        +'<div style="font-size:20px;font-weight:800;color:#55EFC4;">'+_ms_inc+'₪</div></div>'
+      +'<div style="background:#0A0A14;border-radius:10px;padding:12px;text-align:center;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">💸 הוצאות</div>'
+        +'<div style="font-size:20px;font-weight:800;color:#FF6B6B;">'+Math.round(totalSpent)+'₪</div></div>'
+      +'<div style="background:#0A0A14;border-radius:10px;padding:12px;text-align:center;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">💼 מאזן</div>'
+        +'<div style="font-size:20px;font-weight:800;color:'+_ms_balCol+';">'+_ms_balStr+'</div></div>'
+      +'<div style="background:#0A0A14;border-radius:10px;padding:12px;text-align:center;">'
+        +'<div style="font-size:11px;color:#aaa;margin-bottom:4px;">📝 עסקאות</div>'
+        +'<div style="font-size:20px;font-weight:800;color:#A29BFE;">'+cur.length+'</div></div>'
+      +'</div>'
+      +_ms_topCatHtml+_ms_topTxnHtml
+      +'</div>';
+
     viewHtml+=`<div class="card" style="border-color:#55EFC418;"><div style="font-size:11px;color:#555;margin-bottom:10px;">💰 גרף מאזן מצטבר</div><div style="position:relative;height:200px;"><canvas id="saving-chart" width="1000" height="200"></canvas></div></div>`;
     viewHtml+=`<div class="card" style="border-color:#FFD70018;background:linear-gradient(135deg,#13131F,#1a1400);">
       <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#FFD700;">📅 סיכום שנתי — ${Math.round(yearSpent)}₪</div>
@@ -512,7 +549,7 @@ viewHtml+=`<div class="grid2">
     </div>
     <div class="card">
       <div style="font-size:13px;font-weight:700;margin-bottom:10px;">📋 כל ההכנסות</div>
-      ${[...income].sort((a,b)=>b.date.localeCompare(a.date)).map(inc=>`
+      ${[...income].filter(i=>monthKey(i.date)===activeMonth).sort((a,b)=>b.date.localeCompare(a.date)).map(inc=>`
         <div class="txn-row">
           <div style="display:flex;gap:9px;align-items:center;">
             <div style="width:8px;height:8px;border-radius:50%;background:${PAY_COLORS[inc.type]||"#55EFC4"};"></div>
