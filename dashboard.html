@@ -159,15 +159,14 @@ function mergeArraysById(remote,local){
   return Object.values(map);
 }
 function mergeTxnsByMonth(remote,local){
+  // Local always wins — deletions/edits must be respected
   const merged={...remote};
   for(const m of Object.keys(local)){
-    if(!merged[m]){merged[m]=local[m];}
-    else{
-      const byId={};
-      for(const t of merged[m])byId[t.id]=t;
-      for(const t of local[m])if(!byId[t.id])byId[t.id]=t;
-      merged[m]=Object.values(byId);
-    }
+    merged[m]=local[m]; // local is authoritative
+  }
+  // Add remote months not in local
+  for(const m of Object.keys(remote)){
+    if(!local[m])merged[m]=remote[m];
   }
   return merged;
 }
@@ -937,10 +936,19 @@ function addIncome(){
   renderAll();
 }
 
+
+function pushTxns(){
+  try{
+    const vv=encodeURIComponent(JSON.stringify(allTxns));
+    const cc=new AbortController();
+    setTimeout(()=>cc.abort(),6000);
+    fetch(`${SYNC_URL}?action=set&key=bgt_txns&value=${vv}`,{mode:"no-cors",signal:cc.signal});
+  }catch{}
+}
 function deleteTxn(id,month){
   if(!confirm("למחוק עסקה זו?"))return;
   allTxns[month]=(allTxns[month]||[]).filter(t=>String(t.id)!==String(id));
-  lsSet(LS.txns,allTxns);renderAll();
+  lsSet(LS.txns,allTxns);pushTxns();renderAll();
 }
 function deleteIncome(id){
   if(!confirm("למחוק הכנסה זו?"))return;
@@ -1131,7 +1139,7 @@ function saveEditTxn(){
   const cat=document.getElementById('edit-txn-cat').value;
   if(!desc||!amount)return;
   allTxns[month]=(allTxns[month]||[]).map(t=>String(t.id)===String(id)?{...t,desc,amount,date,category:cat,type:_editTxnType}:t);
-  lsSet(LS.txns,allTxns);
+  lsSet(LS.txns,allTxns);pushTxns();
   document.getElementById('edit-txn-modal').style.display='none';
   renderAll();
 }
